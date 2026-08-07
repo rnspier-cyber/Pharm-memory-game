@@ -117,6 +117,26 @@
             cursor: pointer;
         }
 
+        /* Scan Button Styling */
+        #reveal-btn {
+            margin: 0 auto 15px auto; 
+            width: 100%; 
+            max-width: 900px; 
+            padding: 12px; 
+            font-size: 1.1em; 
+            background-color: #002233; 
+            color: var(--primary-color); 
+            border: 2px dashed var(--primary-color); 
+            box-shadow: none;
+            text-transform: uppercase;
+        }
+
+        #reveal-btn:hover:not(:disabled) {
+            background-color: var(--primary-color);
+            color: #000;
+            border: 2px solid var(--primary-color);
+        }
+
         .grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
@@ -391,6 +411,11 @@
         > SYSTEM BOOTED. Parsing massive NCLEX Database... Awaiting first input.
     </div>
 
+    <!-- REVEAL CARDS BUTTON -->
+    <button id="reveal-btn" class="hidden" onclick="useReveal()">
+        [ ACTIVE SYSTEM SCAN: <span id="reveals-count">3</span> USES LEFT ]
+    </button>
+
     <div class="grid" id="game-board"></div>
 
     <div id="click-blocker" class="hidden"></div>
@@ -563,6 +588,11 @@
         let currentRankTier = -1; 
         const PAIRS_PER_ROUND = 6; 
 
+        // Reveal variables
+        let maxRevealsPerRound = 3;
+        let revealsRemaining = 3;
+        let isRevealing = false;
+
         let firstCard = null;
         let secondCard = null;
         let lockBoard = false;
@@ -700,7 +730,7 @@
             // Generate 4 fake scores around the player
             for (let i = 0; i < 4; i++) {
                 let name = fakeNames[Math.floor(Math.random() * fakeNames.length)];
-                let randomOffset = Math.floor(Math.random() * 2000) - 800; // -800 to +1200
+                let randomOffset = Math.floor(Math.random() * 2000) - 800; 
                 let fakeScore = Math.max(0, playerScore + randomOffset);
                 let fakeRank = "Competitor";
                 
@@ -712,7 +742,6 @@
                 leaderboard.push({ name: name, score: fakeScore, rank: fakeRank, isPlayer: false });
             }
 
-            // Sort descending
             leaderboard.sort((a, b) => b.score - a.score);
 
             let html = `<table class="leaderboard-table">
@@ -745,10 +774,16 @@
         function returnToMenu() {
             document.getElementById('overlay').classList.add('hidden');
             document.getElementById('start-screen').classList.remove('hidden');
+            document.getElementById('reveal-btn').classList.add('hidden');
         }
 
         function selectDifficulty(difficulty) {
             MAX_MISTAKES = difficulty;
+            
+            if (difficulty === 20) maxRevealsPerRound = 3;
+            else if (difficulty === 15) maxRevealsPerRound = 2;
+            else if (difficulty === 10) maxRevealsPerRound = 1;
+
             document.getElementById('max-mistakes').innerText = MAX_MISTAKES;
             document.getElementById('start-screen').classList.add('hidden');
             document.getElementById('category-screen').classList.remove('hidden');
@@ -775,6 +810,7 @@
             }
 
             document.getElementById('category-screen').classList.add('hidden');
+            document.getElementById('reveal-btn').classList.remove('hidden');
             
             availableDrugs = shuffle([...fullDatabase]);
             score = 0;
@@ -796,6 +832,54 @@
             setupRound();
         }
 
+        function useReveal() {
+            if (revealsRemaining <= 0 || lockBoard || isRevealing) return;
+            
+            revealsRemaining--;
+            document.getElementById('reveals-count').innerText = revealsRemaining;
+            
+            const btn = document.getElementById('reveal-btn');
+            if (revealsRemaining === 0) {
+                btn.style.opacity = '0.3';
+                btn.style.cursor = 'not-allowed';
+                btn.disabled = true;
+            }
+
+            if (firstCard && !secondCard) {
+                firstCard.classList.remove('flipped');
+                firstCard = null;
+            }
+
+            lockBoard = true;
+            isRevealing = true;
+            
+            const terminal = document.getElementById('knowledge-terminal');
+            const originalColor = terminal.style.color;
+            
+            terminal.style.color = "var(--stem-color)";
+            terminal.innerHTML = `> ACTIVE SYSTEM SCAN INITIATED. MNEMONIC UPLINK: 5s REMAINING...`;
+
+            const unmatchedCards = document.querySelectorAll('.card:not(.matched)');
+            unmatchedCards.forEach(card => card.classList.add('flipped'));
+
+            let seconds = 4;
+            const timer = setInterval(() => {
+                if(seconds > 0) {
+                    terminal.innerHTML = `> ACTIVE SYSTEM SCAN INITIATED. MNEMONIC UPLINK: ${seconds}s REMAINING...`;
+                    seconds--;
+                }
+            }, 1000);
+
+            setTimeout(() => {
+                clearInterval(timer);
+                unmatchedCards.forEach(card => card.classList.remove('flipped'));
+                terminal.style.color = originalColor;
+                terminal.innerHTML = `> SCAN COMPLETE. RESUMING NORMAL OPERATION.`;
+                lockBoard = false;
+                isRevealing = false;
+            }, 5000);
+        }
+
         function setupRound() {
             const board = document.getElementById('game-board');
             board.innerHTML = '';
@@ -803,12 +887,21 @@
             firstCard = null;
             secondCard = null;
             lockBoard = false;
+            isRevealing = false;
+
+            revealsRemaining = maxRevealsPerRound;
+            document.getElementById('reveals-count').innerText = revealsRemaining;
+            const btn = document.getElementById('reveal-btn');
+            btn.style.opacity = '1';
+            btn.style.cursor = 'pointer';
+            btn.disabled = false;
 
             if (availableDrugs.length < PAIRS_PER_ROUND) {
                 const rank = document.getElementById('rank-title').innerText;
                 let msg = `You memorized the entire database! Incredible work.<br>`;
                 msg += generateLeaderboard(score, rank);
                 showOverlay("DATABASE MASTERED", msg, true);
+                btn.classList.add('hidden');
                 return;
             }
 
@@ -862,7 +955,7 @@
         }
 
         function flipCard() {
-            if (lockBoard) return;
+            if (lockBoard || isRevealing) return;
             if (this === firstCard) return;
 
             this.classList.add('flipped');
@@ -904,6 +997,7 @@
             terminal.style.color = "var(--primary-color)";
             
             if (matchesFound === PAIRS_PER_ROUND) {
+                document.getElementById('reveal-btn').disabled = true;
                 terminal.innerHTML = `<div>> UNLOCKED: <strong>${highlightStem(drug.name)}</strong> (${drug.class}).<br>MOA: ${drug.moa}.<br>Uses: ${drug.indication}. Avoid in: ${drug.contraindication}. Watch for: ${drug.sideEffect}.</div><div class="blink">[TAP ANYWHERE FOR NEXT ROUND]</div>`;
                 terminal.classList.add('clickable-terminal');
                 blocker.classList.remove('hidden'); 
@@ -969,6 +1063,7 @@
         }
 
         function showGameOver() {
+            document.getElementById('reveal-btn').classList.add('hidden');
             const rank = document.getElementById('rank-title').innerText;
             let msg = `CLINICAL FAILURE.<br>Maximum errors reached. You failed your clinical rotation.<br>`;
             msg += generateLeaderboard(score, rank);
