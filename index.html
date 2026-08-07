@@ -89,6 +89,7 @@
             border: 2px solid var(--primary-color) !important;
             box-shadow: 0 0 15px var(--primary-color) !important;
             background: #002211 !important;
+            cursor: pointer;
         }
 
         .clickable-terminal.error-state {
@@ -190,6 +191,8 @@
             justify-content: center;
             z-index: 2000;
             text-align: center;
+            overflow-y: auto; 
+            padding: 20px 0;
         }
 
         .hidden {
@@ -209,6 +212,75 @@
             line-height: 1.5;
             padding: 0 20px;
             margin-bottom: 30px;
+        }
+
+        /* Checkbox Styling */
+        .checkbox-container {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 15px;
+            background: #001100;
+            padding: 20px;
+            border: 2px solid var(--primary-color);
+            box-shadow: inset 0 0 15px rgba(0, 255, 204, 0.2);
+            margin-bottom: 20px;
+        }
+
+        .checkbox-container label {
+            font-size: 1.3em;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--primary-color);
+        }
+
+        .checkbox-container input[type="checkbox"] {
+            width: 25px;
+            height: 25px;
+            cursor: pointer;
+            accent-color: var(--secondary-color);
+        }
+
+        .mini-btn-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .mini-btn-group button {
+            margin: 0;
+            padding: 10px 15px;
+            font-size: 1em;
+            width: auto;
+        }
+
+        /* Leaderboard Styling */
+        .leaderboard-table {
+            width: 90%;
+            max-width: 700px;
+            margin: 20px auto;
+            border-collapse: collapse;
+            font-size: 1em;
+            text-align: left;
+            background: #001100;
+            border: 2px solid var(--primary-color);
+            box-shadow: 0 0 15px rgba(0, 255, 204, 0.2);
+        }
+        .leaderboard-table th, .leaderboard-table td {
+            padding: 10px;
+            border-bottom: 1px dashed var(--primary-color);
+        }
+        .leaderboard-table th {
+            color: var(--secondary-color);
+            text-shadow: 0 0 5px var(--secondary-color);
+        }
+        .player-row {
+            background-color: rgba(0, 255, 204, 0.3);
+            color: #fff;
+            font-weight: bold;
+            text-shadow: 0 0 5px var(--primary-color);
         }
 
         button {
@@ -235,10 +307,12 @@
         .btn-easy { border-color: var(--primary-color); color: var(--primary-color); box-shadow: 0 0 10px var(--primary-color); }
         .btn-med { border-color: var(--stem-color); color: var(--stem-color); box-shadow: 0 0 10px var(--stem-color); }
         .btn-hard { border-color: var(--danger-color); color: var(--danger-color); box-shadow: 0 0 10px var(--danger-color); }
+        .btn-start-rotation { background-color: #002200; border-color: var(--primary-color); color: var(--primary-color); }
 
         .btn-easy:hover { background-color: var(--primary-color); color: #000; }
         .btn-med:hover { background-color: var(--stem-color); color: #000; }
         .btn-hard:hover { background-color: var(--danger-color); color: #000; }
+        .btn-start-rotation:hover { background-color: var(--primary-color); color: #000; }
 
         @media (max-width: 768px) {
             h1 { font-size: 2em; margin-bottom: 10px; }
@@ -248,6 +322,8 @@
             .stats-item { font-size: 1em; }
             #knowledge-terminal { font-size: 0.95em; }
             .fullscreen-overlay h2 { font-size: 2.2em; }
+            .checkbox-container label { font-size: 1.1em; }
+            .leaderboard-table { font-size: 0.85em; }
         }
 
         @media (max-width: 480px) {
@@ -260,20 +336,49 @@
             .stats-item { font-size: 0.9em; }
             #knowledge-terminal { font-size: 0.85em; min-height: 50px; padding: 8px; }
             button { padding: 12px 20px; font-size: 1em; }
+            .checkbox-container label { font-size: 1em; }
+            .mini-btn-group button { padding: 8px 10px; font-size: 0.9em; }
+            .leaderboard-table th, .leaderboard-table td { padding: 5px; }
         }
     </style>
 </head>
 <body>
 
-    <!-- START SCREEN -->
+    <!-- 1. DIFFICULTY SCREEN -->
     <div id="start-screen" class="fullscreen-overlay">
         <h2>[ MED-MATCH: NCLEX ]</h2>
         <p>Select Your Clinical Rotation Difficulty:</p>
-        <button class="btn-easy" onclick="startGame(20)">EASY (20 Errors Allowed)</button>
-        <button class="btn-med" onclick="startGame(15)">MEDIUM (15 Errors Allowed)</button>
-        <button class="btn-hard" onclick="startGame(10)">HARD (10 Errors Allowed)</button>
+        <button class="btn-easy" onclick="selectDifficulty(20)">EASY (20 Errors Allowed)</button>
+        <button class="btn-med" onclick="selectDifficulty(15)">MEDIUM (15 Errors Allowed)</button>
+        <button class="btn-hard" onclick="selectDifficulty(10)">HARD (10 Errors Allowed)</button>
     </div>
 
+    <!-- 2. CATEGORY SELECTION SCREEN -->
+    <div id="category-screen" class="fullscreen-overlay hidden">
+        <h2>[ STUDY TARGETS ]</h2>
+        <p>Select which aspects you want to match against the medication names:</p>
+        
+        <div class="checkbox-container">
+            <label><input type="checkbox" class="aspect-checkbox" value="class" checked> Pharmacologic Class</label>
+            <label><input type="checkbox" class="aspect-checkbox" value="indication" checked> Indication / Use</label>
+            <label><input type="checkbox" class="aspect-checkbox" value="contraindication" checked> Contraindication</label>
+            <label><input type="checkbox" class="aspect-checkbox" value="sideEffect" checked> Key Adverse Effect</label>
+            <label><input type="checkbox" class="aspect-checkbox" value="moa" checked> Mechanism of Action (MOA)</label>
+        </div>
+
+        <div class="mini-btn-group">
+            <button onclick="toggleAllCategories(true)">Select All</button>
+            <button onclick="toggleAllCategories(false)">Deselect All</button>
+        </div>
+
+        <p id="category-error" style="color: var(--danger-color); font-size: 1.1em; margin-bottom: 10px; display: none;">
+            ⚠️ ERROR: Please select at least one category to proceed!
+        </p>
+
+        <button class="btn-start-rotation" onclick="beginClinicalRotation()">BEGIN CLINICAL ROTATION</button>
+    </div>
+
+    <!-- MAIN GAME UI -->
     <h1>[ MED-MATCH: NCLEX ]</h1>
     
     <div class="stats-container">
@@ -293,90 +398,169 @@
     <!-- GAME OVER / REBOOT OVERLAY -->
     <div id="overlay" class="fullscreen-overlay hidden">
         <h2 id="overlay-title">GAME OVER</h2>
-        <p id="overlay-message">Message goes here.</p>
+        <div id="overlay-message"></div>
         <button id="overlay-btn" onclick="returnToMenu()">MAIN MENU</button>
     </div>
 
     <script>
         const fullDatabase = [
             // --- CARDIOVASCULAR ---
-            { name: "Lisinopril", class: "ACE Inhibitor", indication: "Hypertension, HF, post-MI", contraindication: "Pregnancy, angioedema", sideEffect: "Dry cough, hyperkalemia", emoji: "🫀" },
-            { name: "Losartan", class: "ARB", indication: "Hypertension, heart failure", contraindication: "Pregnancy", sideEffect: "Angioedema, hypotension", emoji: "🩸" },
-            { name: "Metoprolol", class: "Beta-1 Blocker", indication: "Hypertension, angina", contraindication: "Bradycardia, heart block", sideEffect: "Masks signs of hypoglycemia", emoji: "📉" },
-            { name: "Nifedipine", class: "Calcium Channel Blocker", indication: "Hypertension, angina", contraindication: "Heart block, severe HF", sideEffect: "Peripheral edema", emoji: "🦵" },
-            { name: "Prazosin", class: "Alpha-1 Blocker", indication: "Hypertension, BPH", contraindication: "Hypotension", sideEffect: "First-dose orthostatic hypotension", emoji: "😵" },
-            { name: "Atorvastatin", class: "HMG-CoA Reductase Inhibitor", indication: "Hypercholesterolemia", contraindication: "Pregnancy, active liver disease", sideEffect: "Muscle aches, rhabdomyolysis", emoji: "💪" },
-            { name: "Digoxin", class: "Cardiac Glycoside", indication: "Heart failure, A-fib", contraindication: "V-fib, heart block", sideEffect: "Visual halos (yellow/green)", emoji: "👀" },
-            { name: "Nitroglycerin", class: "Organic Nitrate", indication: "Angina (acute & prophylaxis)", contraindication: "Traumatic head injury", sideEffect: "Severe headache, reflex tachycardia", emoji: "🤕" },
-            { name: "Amiodarone", class: "Potassium Channel Blocker", indication: "V-fib, unstable V-tach", contraindication: "Bradycardia, heart block", sideEffect: "Blue-gray skin, pulmonary toxicity", emoji: "🫁" },
-            
+            { name: "Lisinopril", class: "ACE Inhibitor", indication: "Hypertension, HF, post-MI", contraindication: "Pregnancy, angioedema", sideEffect: "Dry cough, hyperkalemia", moa: "Blocks ACE -> lowers fluid & dilates vessels", emoji: "🫀" },
+            { name: "Losartan", class: "ARB", indication: "Hypertension, heart failure", contraindication: "Pregnancy", sideEffect: "Angioedema, hypotension", moa: "Blocks Angiotensin II receptors directly", emoji: "🩸" },
+            { name: "Metoprolol", class: "Beta-1 Blocker", indication: "Hypertension, angina", contraindication: "Bradycardia, heart block", sideEffect: "Masks signs of hypoglycemia", moa: "Blocks Beta-1 in heart -> lowers HR & force", emoji: "📉" },
+            { name: "Nifedipine", class: "Calcium Channel Blocker", indication: "Hypertension, angina", contraindication: "Heart block, severe HF", sideEffect: "Peripheral edema", moa: "Blocks calcium -> relaxes arterial smooth muscle", emoji: "🦵" },
+            { name: "Diltiazem", class: "Calcium Channel Blocker", indication: "A-fib, hypertension", contraindication: "2nd/3rd degree heart block", sideEffect: "Bradycardia, heart failure", moa: "Blocks calcium in heart & vessels -> slows HR", emoji: "🫀" },
+            { name: "Prazosin", class: "Alpha-1 Blocker", indication: "Hypertension, BPH", contraindication: "Hypotension", sideEffect: "First-dose orthostatic hypotension", moa: "Blocks Alpha-1 -> dilates vessels & relaxes prostate", emoji: "😵" },
+            { name: "Atorvastatin", class: "HMG-CoA Reductase Inhibitor", indication: "Hypercholesterolemia", contraindication: "Pregnancy, active liver disease", sideEffect: "Muscle aches, rhabdomyolysis", moa: "Inhibits cholesterol synthesis enzyme in liver", emoji: "💪" },
+            { name: "Digoxin", class: "Cardiac Glycoside", indication: "Heart failure, A-fib", contraindication: "V-fib, heart block", sideEffect: "Visual halos (yellow/green)", moa: "Increases heart pump force & slows HR", emoji: "👀" },
+            { name: "Nitroglycerin", class: "Organic Nitrate", indication: "Angina (acute & prophylaxis)", contraindication: "Traumatic head injury", sideEffect: "Severe headache, reflex tachycardia", moa: "Dilates veins -> reduces cardiac preload & O2 demand", emoji: "🤕" },
+            { name: "Amiodarone", class: "Potassium Channel Blocker", indication: "V-fib, unstable V-tach", contraindication: "Bradycardia, heart block", sideEffect: "Blue-gray skin, pulmonary toxicity", moa: "Prolongs cardiac action potential & refractory period", emoji: "🫁" },
+            { name: "Clonidine", class: "Alpha-2 Agonist", indication: "Hypertension, ADHD", contraindication: "Bleeding disorders", sideEffect: "Rebound hypertension, dry mouth", moa: "Stimulates central Alpha-2 -> lowers sympathetic BP", emoji: "🩺" },
+            { name: "Epinephrine", class: "Adrenergic Agonist", indication: "Anaphylaxis, cardiac arrest", contraindication: "Narrow-angle glaucoma", sideEffect: "Tachycardia, hypertension", moa: "Stimulates Alpha & Beta -> constricts vessels, opens airways", emoji: "⚡" },
+            { name: "Adenosine", class: "Antiarrhythmic", indication: "Paroxysmal SVT", contraindication: "2nd/3rd degree heart block", sideEffect: "Brief period of asystole", moa: "Slows AV node conduction -> briefly pauses rhythm", emoji: "🫀" },
+            { name: "Procainamide", class: "Class IA Antiarrhythmic", indication: "SVT, V-tach", contraindication: "Heart block, SLE", sideEffect: "Lupus-like syndrome, neutropenia", moa: "Blocks sodium channels -> slows cardiac conduction", emoji: "🩸" },
+
             // --- HEMATOLOGIC / IMMUNE ---
-            { name: "Heparin", class: "Anticoagulant", indication: "DVT, PE, stroke, MI", contraindication: "Active bleeding", sideEffect: "Bleeding, HIT", emoji: "🩸" },
-            { name: "Warfarin", class: "Vitamin K Antagonist", indication: "VTE, A-fib, prosthetic valves", contraindication: "Pregnancy (teratogenic)", sideEffect: "Hemorrhage, hepatitis", emoji: "⚠️" },
-            { name: "Clopidogrel", class: "Antiplatelet", indication: "Prevention of MI, stroke", contraindication: "Active bleeding", sideEffect: "Prolonged bleeding time", emoji: "🛑" },
-            { name: "Epoetin alfa", class: "Erythropoietic Growth Factor", indication: "Anemia (CKD, chemotherapy)", contraindication: "Uncontrolled hypertension", sideEffect: "Hypertension, DVT risk", emoji: "📈" },
-            { name: "Methotrexate", class: "DMARD / Antimetabolite", indication: "Rheumatoid arthritis, cancer", contraindication: "Pregnancy", sideEffect: "Bone marrow suppression", emoji: "🦴" },
+            { name: "Heparin", class: "Anticoagulant", indication: "DVT, PE, stroke, MI", contraindication: "Active bleeding", sideEffect: "Bleeding, HIT", moa: "Inactivates thrombin & Factor Xa via antithrombin", emoji: "🩸" },
+            { name: "Enoxaparin", class: "Low Molecular Weight Heparin", indication: "DVT prophylaxis & treatment", contraindication: "Pork allergy, active bleeding", sideEffect: "Bleeding, HIT", moa: "Selectively inactivates Factor Xa -> prevents clots", emoji: "💉" },
+            { name: "Warfarin", class: "Vitamin K Antagonist", indication: "VTE, A-fib, prosthetic valves", contraindication: "Pregnancy (teratogenic)", sideEffect: "Hemorrhage, hepatitis", moa: "Inhibits Vitamin K-dependent clotting factor synthesis", emoji: "⚠️" },
+            { name: "Clopidogrel", class: "Antiplatelet", indication: "Prevention of MI, stroke", contraindication: "Active bleeding", sideEffect: "Prolonged bleeding time", moa: "Inhibits ADP receptors on platelets -> stops sticking", emoji: "🛑" },
+            { name: "Alteplase", class: "Thrombolytic", indication: "Ischemic stroke, massive PE", contraindication: "Active internal bleeding, recent trauma", sideEffect: "Intracranial hemorrhage", moa: "Converts plasminogen to plasmin -> dissolves clots", emoji: "🧠" },
+            { name: "Epoetin alfa", class: "Erythropoietic Growth Factor", indication: "Anemia (CKD, chemotherapy)", contraindication: "Uncontrolled hypertension", sideEffect: "Hypertension, DVT risk", moa: "Stimulates bone marrow -> increases RBC production", emoji: "📈" },
+            { name: "Methotrexate", class: "DMARD / Antimetabolite", indication: "Rheumatoid arthritis, cancer", contraindication: "Pregnancy", sideEffect: "Bone marrow suppression", moa: "Inhibits folic acid metabolism -> stops rapid cell growth", emoji: "🦴" },
+            { name: "Rivaroxaban", class: "Factor Xa Inhibitor", indication: "DVT, PE, A-fib", contraindication: "Active bleeding", sideEffect: "Bleeding, elevated liver enzymes", moa: "Directly inhibits Factor Xa -> blocks thrombin production", emoji: "🩸" },
+            { name: "Filgrastim", class: "Leukopoietic Growth Factor", indication: "Neutropenia", contraindication: "E. coli protein hypersensitivity", sideEffect: "Bone pain, leukocytosis", moa: "Stimulates bone marrow -> produces neutrophil WBCs", emoji: "🦴" },
 
             // --- ENDOCRINE ---
-            { name: "Metformin", class: "Biguanide", indication: "Type 2 Diabetes Mellitus", contraindication: "Severe renal dysfunction", sideEffect: "Lactic acidosis, GI upset", emoji: "🍬" },
-            { name: "Regular Insulin", class: "Short-Acting Insulin", indication: "Diabetes Mellitus, hyperkalemia", contraindication: "Hypoglycemia", sideEffect: "Hypoglycemia, lipohypertrophy", emoji: "💉" },
-            { name: "Levothyroxine", class: "Thyroid Hormone", indication: "Hypothyroidism", contraindication: "Thyrotoxicosis, recent MI", sideEffect: "Signs of hyperthyroidism", emoji: "🦋" },
-            { name: "Glipizide", class: "Sulfonylurea", indication: "Type 2 Diabetes", contraindication: "Sulfa allergy", sideEffect: "Hypoglycemia, weight gain", emoji: "📉" },
+            { name: "Metformin", class: "Biguanide", indication: "Type 2 Diabetes Mellitus", contraindication: "Severe renal dysfunction", sideEffect: "Lactic acidosis, GI upset", moa: "Reduces liver glucose output & boosts tissue sensitivity", emoji: "🍬" },
+            { name: "Regular Insulin", class: "Short-Acting Insulin", indication: "Diabetes Mellitus, hyperkalemia", contraindication: "Hypoglycemia", sideEffect: "Hypoglycemia, lipohypertrophy", moa: "Transports glucose into cells & lowers blood sugar", emoji: "💉" },
+            { name: "Glargine", class: "Long-Acting Insulin", indication: "Diabetes Mellitus", contraindication: "Hypoglycemia", sideEffect: "No peak, given once daily", moa: "Slowly releases insulin over 24 hrs with no peak", emoji: "🕒" },
+            { name: "Levothyroxine", class: "Thyroid Hormone", indication: "Hypothyroidism", contraindication: "Thyrotoxicosis, recent MI", sideEffect: "Signs of hyperthyroidism", moa: "Synthetic T4 -> boosts overall cellular metabolic rate", emoji: "🦋" },
+            { name: "Propylthiouracil", class: "Antithyroid", indication: "Hyperthyroidism, Graves' disease", contraindication: "Liver failure", sideEffect: "Agranulocytosis, hepatotoxicity", moa: "Blocks synthesis & conversion of thyroid hormones", emoji: "📉" },
+            { name: "Desmopressin", class: "Antidiuretic Hormone", indication: "Diabetes insipidus", contraindication: "Renal impairment", sideEffect: "Water intoxication, hyponatremia", moa: "Synthetic ADH -> increases water reabsorption in kidneys", emoji: "💧" },
+            { name: "Glipizide", class: "Sulfonylurea", indication: "Type 2 Diabetes", contraindication: "Sulfa allergy", sideEffect: "Hypoglycemia, weight gain", moa: "Stimulates pancreatic beta cells -> releases more insulin", emoji: "📉" },
+            { name: "Prednisone", class: "Corticosteroid", indication: "Inflammation, autoimmune issues", contraindication: "Active untreated infections", sideEffect: "Hyperglycemia, immunosuppression", moa: "Suppresses immune response & inflammatory pathways", emoji: "😡" },
+            { name: "Sitagliptin", class: "DPP-4 Inhibitor", indication: "Type 2 Diabetes", contraindication: "Type 1 Diabetes", sideEffect: "Pancreatitis, upper respiratory infection", moa: "Inhibits DPP-4 -> boosts incretins to release insulin", emoji: "🍬" },
+            { name: "Octreotide", class: "Growth Hormone Antagonist", indication: "Acromegaly, bleeding varices", contraindication: "Gallbladder disease", sideEffect: "GI upset, gallstones", moa: "Mimics somatostatin -> suppresses GH & GI secretions", emoji: "🛑" },
 
-            // --- RENAL ---
-            { name: "Furosemide", class: "Loop Diuretic", indication: "Pulmonary edema, HF", contraindication: "Anuria, hepatic coma", sideEffect: "Hypokalemia, ototoxicity", emoji: "👂" },
-            { name: "Hydrochlorothiazide", class: "Thiazide Diuretic", indication: "Hypertension, mild edema", contraindication: "Anuria, severe renal impairment", sideEffect: "Hypokalemia, hyperglycemia", emoji: "🚽" },
-            { name: "Spironolactone", class: "Potassium-Sparing Diuretic", indication: "Heart failure, hypertension", contraindication: "Hyperkalemia", sideEffect: "Hyperkalemia, gynecomastia", emoji: "🍌" },
+            // --- RENAL / URINARY ---
+            { name: "Furosemide", class: "Loop Diuretic", indication: "Pulmonary edema, HF", contraindication: "Anuria, hepatic coma", sideEffect: "Hypokalemia, ototoxicity", moa: "Blocks Na/Cl reabsorption in loop of Henle -> fluid loss", emoji: "👂" },
+            { name: "Hydrochlorothiazide", class: "Thiazide Diuretic", indication: "Hypertension, mild edema", contraindication: "Anuria, severe renal impairment", sideEffect: "Hypokalemia, hyperglycemia", moa: "Blocks Na/Cl in distal tubule -> mild fluid loss", emoji: "🚽" },
+            { name: "Spironolactone", class: "Potassium-Sparing Diuretic", indication: "Heart failure, hypertension", contraindication: "Hyperkalemia", sideEffect: "Hyperkalemia, gynecomastia", moa: "Blocks aldosterone -> excretes Na/water while saving K+", emoji: "🍌" },
+            { name: "Mannitol", class: "Osmotic Diuretic", indication: "Increased ICP, IOP", contraindication: "Active intracranial bleeding", sideEffect: "Heart failure, pulmonary edema", moa: "Pulls fluid out of brain/eye tissues via osmotic gradient", emoji: "🧠" },
+            { name: "Phenazopyridine", class: "Urinary Analgesic", indication: "Dysuria, UTI pain", contraindication: "Renal impairment", sideEffect: "Orange-red body fluids", moa: "Exerts local topical anesthetic effect on urinary mucosa", emoji: "🚽" },
+            { name: "Bumetanide", class: "Loop Diuretic", indication: "Severe edema, Heart failure", contraindication: "Anuria", sideEffect: "Severe hypokalemia, hypotension", moa: "Potently blocks Na/Cl reabsorption in loop of Henle", emoji: "💧" },
 
             // --- RESPIRATORY ---
-            { name: "Albuterol", class: "Beta-2 Agonist", indication: "Asthma (rescue), COPD", contraindication: "Tachydysrhythmias", sideEffect: "Tachycardia, tremors", emoji: "🫁" },
-            { name: "Ipratropium", class: "Anticholinergic", indication: "COPD, asthma", contraindication: "Peanut/soy allergy", sideEffect: "Dry mouth, hoarseness", emoji: "🥜" },
-            { name: "Fluticasone", class: "Glucocorticoid", indication: "Asthma (maintenance)", contraindication: "Systemic fungal infection", sideEffect: "Oral candidiasis, bone loss", emoji: "👅" },
-            { name: "Theophylline", class: "Methylxanthine", indication: "Long-term asthma/COPD", contraindication: "Peptic ulcer disease", sideEffect: "Seizures, tachycardia", emoji: "☕" },
+            { name: "Albuterol", class: "Beta-2 Agonist", indication: "Asthma (rescue), COPD", contraindication: "Tachydysrhythmias", sideEffect: "Tachycardia, tremors", moa: "Stimulates Beta-2 receptors -> dilates bronchial airways", emoji: "🫁" },
+            { name: "Ipratropium", class: "Anticholinergic", indication: "COPD, asthma", contraindication: "Peanut/soy allergy", sideEffect: "Dry mouth, hoarseness", moa: "Blocks muscarinic receptors -> prevents airway constriction", emoji: "🥜" },
+            { name: "Fluticasone", class: "Glucocorticoid", indication: "Asthma (maintenance)", contraindication: "Systemic fungal infection", sideEffect: "Oral candidiasis, bone loss", moa: "Topical steroid -> reduces airway edema & inflammation", emoji: "👅" },
+            { name: "Theophylline", class: "Methylxanthine", indication: "Long-term asthma/COPD", contraindication: "Peptic ulcer disease", sideEffect: "Seizures, tachycardia", moa: "Relaxes bronchial smooth muscle & blocks phosphodiesterase", emoji: "☕" },
+            { name: "Montelukast", class: "Leukotriene Modifier", indication: "Asthma maintenance, allergies", contraindication: "Acute asthma attacks", sideEffect: "Suicidal ideation, depression", moa: "Blocks leukotriene receptors -> reduces airway swelling", emoji: "🌬️" },
+            { name: "Guaifenesin", class: "Expectorant", indication: "Productive cough", contraindication: "Hypersensitivity", sideEffect: "GI upset, drowsiness", moa: "Thins bronchial secretions -> makes coughs productive", emoji: "🤧" },
+            { name: "Diphenhydramine", class: "1st Gen Antihistamine", indication: "Allergies, anaphylaxis, insomnia", contraindication: "Narrow-angle glaucoma", sideEffect: "Sedation, anticholinergic effects", moa: "Blocks central & peripheral H1 histamine receptors", emoji: "😴" },
 
             // --- GASTROINTESTINAL ---
-            { name: "Omeprazole", class: "Proton Pump Inhibitor", indication: "GERD, gastric ulcers", contraindication: "Hypersensitivity", sideEffect: "Bone loss, C. diff risk", emoji: "🔥" },
-            { name: "Famotidine", class: "H2 Antagonist", indication: "Ulcers, GERD", contraindication: "Kidney/liver dysfunction", sideEffect: "CNS effects in elderly", emoji: "🥱" },
-            { name: "Ondansetron", class: "Serotonin Antagonist", indication: "Nausea, vomiting", contraindication: "Prolonged QT interval", sideEffect: "QT prolongation, headache", emoji: "🤮" },
-            { name: "Sucralfate", class: "Mucosal Protectant", indication: "Gastric/duodenal ulcers", contraindication: "Renal failure", sideEffect: "Constipation", emoji: "🛡️" },
+            { name: "Omeprazole", class: "Proton Pump Inhibitor", indication: "GERD, gastric ulcers", contraindication: "Hypersensitivity", sideEffect: "Bone loss, C. diff risk", moa: "Inhibits H+/K+ ATPase pump -> shuts down stomach acid", emoji: "🔥" },
+            { name: "Pantoprazole", class: "Proton Pump Inhibitor", indication: "GERD, stress ulcer prophylaxis", contraindication: "Hypersensitivity", sideEffect: "C. diff risk, osteoporosis", moa: "Inhibits stomach proton pump -> stops gastric acid", emoji: "🛡️" },
+            { name: "Famotidine", class: "H2 Antagonist", indication: "Ulcers, GERD", contraindication: "Kidney/liver dysfunction", sideEffect: "CNS effects in elderly", moa: "Blocks H2 receptors in stomach -> decreases acid production", emoji: "🥱" },
+            { name: "Ondansetron", class: "Serotonin Antagonist", indication: "Nausea, vomiting", contraindication: "Prolonged QT interval", sideEffect: "QT prolongation, headache", moa: "Blocks 5-HT3 serotonin receptors in brain CTZ", emoji: "🤮" },
+            { name: "Promethazine", class: "Antiemetic / Phenothiazine", indication: "Nausea, vomiting", contraindication: "Children under 2 (resp depression)", sideEffect: "Severe tissue injury (IV), sedation", moa: "Blocks dopamine & histamine receptors in brain CTZ", emoji: "🛌" },
+            { name: "Metoclopramide", class: "Prokinetic", indication: "GERD, gastroparesis", contraindication: "GI obstruction/perforation", sideEffect: "Tardive dyskinesia, EPS", moa: "Boosts upper GI motility & speeds stomach emptying", emoji: "🤢" },
+            { name: "Sucralfate", class: "Mucosal Protectant", indication: "Gastric/duodenal ulcers", contraindication: "Renal failure", sideEffect: "Constipation", moa: "Forms physical protective gel barrier over ulcer site", emoji: "🛡️" },
+            { name: "Lactulose", class: "Osmotic Laxative", indication: "Hepatic encephalopathy, constipation", contraindication: "Galactosemia", sideEffect: "Diarrhea, cramps, hypokalemia", moa: "Draws ammonia into colon stool & pulls water in", emoji: "🚽" },
+            { name: "Loperamide", class: "Antidiarrheal", indication: "Diarrhea", contraindication: "Dysentery, C. diff", sideEffect: "Constipation, drowsiness", moa: "Slows GI peristalsis -> increases transit time & fluid absorption", emoji: "🛑" },
 
             // --- NEURO / PSYCH ---
-            { name: "Diazepam", class: "Benzodiazepine", indication: "Anxiety, seizures, spasms", contraindication: "Glaucoma, sleep apnea", sideEffect: "CNS depression", emoji: "😴" },
-            { name: "Fluoxetine", class: "SSRI", indication: "Depression, anxiety, OCD", contraindication: "MAOI use", sideEffect: "Sexual dysfunction, Serotonin Syndrome", emoji: "🧠" },
-            { name: "Lithium", class: "Mood Stabilizer", indication: "Bipolar disorder", contraindication: "Severe renal disease", sideEffect: "Fine hand tremors, polyuria", emoji: "🫨" },
-            { name: "Phenytoin", class: "Antiepileptic", indication: "Seizures (tonic-clonic)", contraindication: "Sinus bradycardia", sideEffect: "Gingival hyperplasia", emoji: "🦷" },
-            { name: "Risperidone", class: "Atypical Antipsychotic", indication: "Schizophrenia, bipolar", contraindication: "Dementia-related psychosis", sideEffect: "Weight gain, mild EPS", emoji: "⚖️" },
-            { name: "Haloperidol", class: "Typical Antipsychotic", indication: "Schizophrenia, Tourette's", contraindication: "Parkinson's disease", sideEffect: "Extrapyramidal symptoms (EPS)", emoji: "🤖" },
-            { name: "Zolpidem", class: "Sedative-Hypnotic", indication: "Insomnia", contraindication: "Sleep apnea", sideEffect: "Sleepwalking, amnesia", emoji: "🛌" },
-            { name: "Levodopa/Carbidopa", class: "Dopamine Agonist", indication: "Parkinson's disease", contraindication: "Glaucoma, MAOI use", sideEffect: "Dyskinesias, dark urine", emoji: "🚶" },
-            { name: "Amitriptyline", class: "Tricyclic Antidepressant", indication: "Depression, neuropathy", contraindication: "Recent MI", sideEffect: "Anticholinergic effects", emoji: "🏜️" },
+            { name: "Diazepam", class: "Benzodiazepine", indication: "Anxiety, seizures, spasms", contraindication: "Glaucoma, sleep apnea", sideEffect: "CNS depression", moa: "Enhances GABA -> depresses CNS activity & calms nerves", emoji: "😴" },
+            { name: "Fluoxetine", class: "SSRI", indication: "Depression, anxiety, OCD", contraindication: "MAOI use", sideEffect: "Sexual dysfunction, Serotonin Syndrome", moa: "Selectively inhibits serotonin reuptake in CNS", emoji: "🧠" },
+            { name: "Bupropion", class: "Atypical Antidepressant", indication: "Depression, smoking cessation", contraindication: "Seizure disorder", sideEffect: "Insomnia, weight loss, seizures", moa: "Inhibits dopamine & norepinephrine reuptake in brain", emoji: "🚭" },
+            { name: "Lithium", class: "Mood Stabilizer", indication: "Bipolar disorder", contraindication: "Severe renal disease", sideEffect: "Fine hand tremors, polyuria", moa: "Alters sodium transport -> stabilizes mood fluctuations", emoji: "🫨" },
+            { name: "Phenytoin", class: "Antiepileptic", indication: "Seizures (tonic-clonic)", contraindication: "Sinus bradycardia", sideEffect: "Gingival hyperplasia", moa: "Inhibits sodium channels -> slows brain electrical firing", emoji: "🦷" },
+            { name: "Valproic Acid", class: "Anticonvulsant / Mood Stabilizer", indication: "Seizures, bipolar", contraindication: "Liver disease", sideEffect: "Hepatotoxicity, pancreatitis, teratogenic", moa: "Increases brain GABA & blocks sodium channels", emoji: "🧠" },
+            { name: "Gabapentin", class: "Anticonvulsant", indication: "Neuropathy, seizures", contraindication: "Renal impairment", sideEffect: "Dizziness, drowsiness", moa: "Modulates calcium channels -> calms overactive nerve pathways", emoji: "⚡" },
+            { name: "Risperidone", class: "Atypical Antipsychotic", indication: "Schizophrenia, bipolar", contraindication: "Dementia-related psychosis", sideEffect: "Weight gain, mild EPS", moa: "Blocks dopamine & serotonin receptors -> calms psychosis", emoji: "⚖️" },
+            { name: "Haloperidol", class: "Typical Antipsychotic", indication: "Schizophrenia, Tourette's", contraindication: "Parkinson's disease", sideEffect: "Extrapyramidal symptoms (EPS)", moa: "Potently blocks dopamine D2 receptors in brain", emoji: "🤖" },
+            { name: "Clozapine", class: "Atypical Antipsychotic", indication: "Treatment-resistant schizophrenia", contraindication: "History of agranulocytosis", sideEffect: "Agranulocytosis, weight gain", moa: "Blocks dopamine & serotonin -> reduces severe psychosis", emoji: "⚖️" },
+            { name: "Methylphenidate", class: "CNS Stimulant", indication: "ADHD, narcolepsy", contraindication: "MAOI use, severe anxiety", sideEffect: "Insomnia, weight loss, tachycardia", moa: "Blocks reuptake of norepinephrine & dopamine", emoji: "🏃" },
+            { name: "Zolpidem", class: "Sedative-Hypnotic", indication: "Insomnia", contraindication: "Sleep apnea", sideEffect: "Sleepwalking, amnesia", moa: "Selectively binds GABA-A receptors -> induces sleep", emoji: "🛌" },
+            { name: "Levodopa/Carbidopa", class: "Dopamine Agonist", indication: "Parkinson's disease", contraindication: "Glaucoma, MAOI use", sideEffect: "Dyskinesias, dark urine", moa: "Converts to dopamine in brain while blocking breakdown", emoji: "🚶" },
+            { name: "Amitriptyline", class: "Tricyclic Antidepressant", indication: "Depression, neuropathy", contraindication: "Recent MI", sideEffect: "Anticholinergic effects", moa: "Blocks serotonin & norepinephrine reuptake + anticholinergic", emoji: "🏜️" },
+            { name: "Lorazepam", class: "Benzodiazepine", indication: "Anxiety, Status Epilepticus", contraindication: "Sleep apnea", sideEffect: "CNS depression, amnesia", moa: "Enhances GABA -> rapid CNS sedation & seizure control", emoji: "😴" },
+            { name: "Buspirone", class: "Atypical Anxiolytic", indication: "Generalized Anxiety Disorder", contraindication: "MAOI use", sideEffect: "Dizziness, headache", moa: "Binds serotonin & dopamine receptors -> calms without sedation", emoji: "🧘" },
+            { name: "Carbamazepine", class: "Anticonvulsant", indication: "Seizures, Bipolar", contraindication: "Bone marrow suppression", sideEffect: "Blood dyscrasias", moa: "Inhibits sodium channels -> slows repetitive neuron firing", emoji: "🧠" },
+            { name: "Donepezil", class: "Cholinesterase Inhibitor", indication: "Alzheimer's disease", contraindication: "GI bleeding", sideEffect: "Bradycardia, nausea", moa: "Inhibits acetylcholinesterase -> keeps acetylcholine active", emoji: "🧠" },
 
             // --- PAIN / MUSCULOSKELETAL ---
-            { name: "Morphine", class: "Opioid Agonist", indication: "Moderate to severe pain", contraindication: "Severe asthma, paralytic ileus", sideEffect: "Respiratory depression, constipation", emoji: "🛌" },
-            { name: "Naloxone", class: "Opioid Antagonist", indication: "Opioid overdose", contraindication: "Opioid dependency", sideEffect: "Tachycardia, acute withdrawal", emoji: "🚨" },
-            { name: "Aspirin", class: "Salicylate / NSAID", indication: "Pain, MI prevention", contraindication: "Children (Reye's syndrome)", sideEffect: "Tinnitus, GI bleed", emoji: "🔔" },
-            { name: "Acetaminophen", class: "Non-opioid Analgesic", indication: "Mild pain, fever", contraindication: "Severe liver impairment", sideEffect: "Hepatotoxicity", emoji: "🌡️" },
-            { name: "Sumatriptan", class: "Serotonin Agonist", indication: "Migraine (abortive)", contraindication: "Ischemic heart disease", sideEffect: "Chest pressure", emoji: "🤕" },
-            { name: "Allopurinol", class: "Xanthine Oxidase Inhibitor", indication: "Chronic gout", contraindication: "Idiopathic hemochromatosis", sideEffect: "Stevens-Johnson syndrome", emoji: "🦶" },
+            { name: "Morphine", class: "Opioid Agonist", indication: "Moderate to severe pain", contraindication: "Severe asthma, paralytic ileus", sideEffect: "Respiratory depression, constipation", moa: "Binds mu-opioid receptors in CNS -> blocks pain signals", emoji: "🛌" },
+            { name: "Fentanyl", class: "Opioid Agonist", indication: "Severe pain, anesthesia adjunct", contraindication: "Opioid-naive patients (for patches)", sideEffect: "Respiratory depression", moa: "Potently binds mu-opioid receptors -> rapid analgesia", emoji: "🛌" },
+            { name: "Naloxone", class: "Opioid Antagonist", indication: "Opioid overdose", contraindication: "Opioid dependency", sideEffect: "Tachycardia, acute withdrawal", moa: "Competitively blocks opioid receptors -> reverses sedation", emoji: "🚨" },
+            { name: "Aspirin", class: "Salicylate / NSAID", indication: "Pain, MI prevention", contraindication: "Children (Reye's syndrome)", sideEffect: "Tinnitus, GI bleed", moa: "Inhibits COX-1/2 -> stops prostaglandins & platelet aggregation", emoji: "🔔" },
+            { name: "Ibuprofen", class: "NSAID", indication: "Pain, inflammation", contraindication: "Peptic ulcer disease, renal impairment", sideEffect: "GI bleed, nephrotoxicity", moa: "Inhibits COX enzymes -> reduces prostaglandin synthesis", emoji: "🔥" },
+            { name: "Celecoxib", class: "COX-2 Inhibitor (NSAID)", indication: "Osteoarthritis, rheumatoid arthritis", contraindication: "Sulfa allergy, CABG surgery", sideEffect: "MI, stroke risk", moa: "Selectively inhibits COX-2 -> stops inflammatory prostaglandins", emoji: "🦴" },
+            { name: "Acetaminophen", class: "Non-opioid Analgesic", indication: "Mild pain, fever", contraindication: "Severe liver impairment", sideEffect: "Hepatotoxicity", moa: "Inhibits CNS prostaglandin synthesis -> lowers pain & fever", emoji: "🌡️" },
+            { name: "Sumatriptan", class: "Serotonin Agonist", indication: "Migraine (abortive)", contraindication: "Ischemic heart disease", sideEffect: "Chest pressure", moa: "Stimulates serotonin receptors -> constricts cranial vessels", emoji: "🤕" },
+            { name: "Allopurinol", class: "Xanthine Oxidase Inhibitor", indication: "Chronic gout", contraindication: "Idiopathic hemochromatosis", sideEffect: "Stevens-Johnson syndrome", moa: "Inhibits xanthine oxidase -> lowers blood uric acid levels", emoji: "🦶" },
+            { name: "Ketorolac", class: "NSAID", indication: "Severe acute pain", contraindication: "Advanced renal impairment", sideEffect: "GI bleeding, Nephrotoxicity", moa: "Potently inhibits COX enzymes -> fast anti-inflammatory pain relief", emoji: "💉" },
+            { name: "Baclofen", class: "Muscle Relaxant", indication: "Muscle spasticity", contraindication: "Hypersensitivity", sideEffect: "CNS depression, nausea", moa: "Stimulates GABA-B receptors in spinal cord -> reduces spasms", emoji: "🧘" },
+            { name: "Cyclobenzaprine", class: "Centrally Acting Muscle Relaxant", indication: "Muscle spasms", contraindication: "MAOI use", sideEffect: "Anticholinergic effects", moa: "Reduces motor neuron activity in brainstem -> relaxes muscle", emoji: "🛌" },
 
             // --- MATERNAL / NEWBORN ---
-            { name: "Oxytocin", class: "Uterine Stimulant", indication: "Induction of labor, PPH", contraindication: "Fetal distress", sideEffect: "Uterine tachysystole", emoji: "👶" },
-            { name: "Magnesium Sulfate", class: "Tocolytic / Anticonvulsant", indication: "Preeclampsia, preterm labor", contraindication: "Myasthenia gravis", sideEffect: "Loss of DTRs, respiratory depression", emoji: "🤰" },
+            { name: "Oxytocin", class: "Uterine Stimulant", indication: "Induction of labor, PPH", contraindication: "Fetal distress", sideEffect: "Uterine tachysystole", moa: "Stimulates uterine smooth muscle contraction & labor", emoji: "👶" },
+            { name: "Magnesium Sulfate", class: "Tocolytic / Anticonvulsant", indication: "Preeclampsia, preterm labor", contraindication: "Myasthenia gravis", sideEffect: "Loss of DTRs, respiratory depression", moa: "Blocks neuromuscular transmission & relaxes smooth muscle", emoji: "🤰" },
+            { name: "Terbutaline", class: "Beta-2 Agonist / Tocolytic", indication: "Preterm labor (delaying)", contraindication: "Maternal tachycardia >120", sideEffect: "Tachycardia, tremors, hypokalemia", moa: "Relaxes uterine muscle by stimulating Beta-2 receptors", emoji: "🤰" },
+            { name: "Methylergonovine", class: "Ergot Alkaloid", indication: "Postpartum hemorrhage", contraindication: "Hypertension, preeclampsia", sideEffect: "Hypertension, cramps", moa: "Directly stimulates uterine muscle -> causes firm contraction", emoji: "👶" },
+            { name: "Misoprostol", class: "Prostaglandin E1", indication: "Cervical ripening, ulcer prevention", contraindication: "Pregnancy (if used for ulcers)", sideEffect: "Miscarriage, dysmenorrhea", moa: "Synthetic prostaglandin -> softens cervix & causes contractions", emoji: "🤰" },
 
             // --- INFECTIOUS DISEASE (ANTIBIOTICS / ANTIVIRALS) ---
-            { name: "Amoxicillin", class: "Penicillin Antibiotic", indication: "Bacterial infections", contraindication: "Severe penicillin allergy", sideEffect: "Anaphylaxis, superinfection", emoji: "🦠" },
-            { name: "Vancomycin", class: "Glycopeptide Antibiotic", indication: "MRSA, C. diff", contraindication: "Corn allergy", sideEffect: "Red Man Syndrome, ototoxicity", emoji: "🔴" },
-            { name: "Gentamicin", class: "Aminoglycoside Antibiotic", indication: "Severe gram-neg infections", contraindication: "Hearing loss", sideEffect: "Ototoxicity, nephrotoxicity", emoji: "⚠️" },
-            { name: "Metronidazole", class: "Antiprotozoal Antibiotic", indication: "Trichomoniasis, C. diff", contraindication: "First trimester of pregnancy", sideEffect: "Metallic taste, disulfiram reaction", emoji: "🤢" },
-            { name: "Acyclovir", class: "Antiviral", indication: "Herpes simplex, VZV", contraindication: "Renal impairment", sideEffect: "Phlebitis, nephrotoxicity", emoji: "🧬" }
+            { name: "Amoxicillin", class: "Penicillin Antibiotic", indication: "Bacterial infections", contraindication: "Severe penicillin allergy", sideEffect: "Anaphylaxis, superinfection", moa: "Inhibits bacterial cell wall synthesis -> cell pops", emoji: "🦠" },
+            { name: "Piperacillin/Tazobactam", class: "Extended-Spectrum Penicillin", indication: "Severe bacterial infections", contraindication: "Penicillin allergy", sideEffect: "Phlebitis, superinfection", moa: "Destroys bacterial cell wall + blocks protective enzymes", emoji: "🦠" },
+            { name: "Ceftriaxone", class: "Cephalosporin Antibiotic", indication: "Bacterial infections", contraindication: "Calcium IV administration", sideEffect: "Phlebitis, cross-sensitivity to PCN", moa: "Disrupts bacterial cell wall synthesis -> lysis", emoji: "🦠" },
+            { name: "Azithromycin", class: "Macrolide Antibiotic", indication: "Respiratory infections, chlamydia", contraindication: "QT prolongation", sideEffect: "Ototoxicity, prolonged QT", moa: "Inhibits bacterial protein synthesis -> halts growth", emoji: "🫁" },
+            { name: "Vancomycin", class: "Glycopeptide Antibiotic", indication: "MRSA, C. diff", contraindication: "Corn allergy", sideEffect: "Red Man Syndrome, ototoxicity", moa: "Destroys cell walls in gram-positive bacteria", emoji: "🔴" },
+            { name: "Gentamicin", class: "Aminoglycoside Antibiotic", indication: "Severe gram-neg infections", contraindication: "Hearing loss", sideEffect: "Ototoxicity, nephrotoxicity", moa: "Inhibits 30S ribosomal protein synthesis -> bactericidal", emoji: "⚠️" },
+            { name: "Ciprofloxacin", class: "Fluoroquinolone", indication: "Severe infections, UTI", contraindication: "Myasthenia gravis, pregnancy", sideEffect: "Achilles tendon rupture", moa: "Inhibits bacterial DNA gyrase -> stops DNA copying", emoji: "🦵" },
+            { name: "Doxycycline", class: "Tetracycline Antibiotic", indication: "Lyme disease, acne, chlamydia", contraindication: "Pregnancy, children < 8 yrs", sideEffect: "Tooth discoloration, photosensitivity", moa: "Inhibits 30S protein synthesis -> halts bacterial growth", emoji: "☀️" },
+            { name: "Metronidazole", class: "Antiprotozoal Antibiotic", indication: "Trichomoniasis, C. diff", contraindication: "First trimester of pregnancy", sideEffect: "Metallic taste, disulfiram reaction", moa: "Breaks DNA structure in anaerobic bacteria & parasites", emoji: "🤢" },
+            { name: "Fluconazole", class: "Antifungal", indication: "Candidiasis", contraindication: "Liver failure", sideEffect: "Hepatotoxicity, QT prolongation", moa: "Inhibits fungal ergosterol synthesis -> ruptures membrane", emoji: "🍄" },
+            { name: "Acyclovir", class: "Antiviral", indication: "Herpes simplex, VZV", contraindication: "Renal impairment", sideEffect: "Phlebitis, nephrotoxicity", moa: "Inhibits viral DNA polymerase -> stops viral replication", emoji: "🧬" },
+            { name: "Rifampin", class: "Antitubercular", indication: "Tuberculosis", contraindication: "Liver disease", sideEffect: "Red-orange body fluids", moa: "Inhibits bacterial RNA polymerase -> stops transcription", emoji: "🩸" },
+            { name: "Isoniazid", class: "Antitubercular", indication: "Tuberculosis", contraindication: "Liver disease", sideEffect: "Hepatotoxicity, peripheral neuropathy", moa: "Inhibits mycolic acid synthesis -> breaks cell wall", emoji: "🫁" },
+            { name: "Trimethoprim/Sulfamethoxazole", class: "Sulfonamide Antibiotic", indication: "UTI, Otitis media", contraindication: "Sulfa allergy", sideEffect: "Stevens-Johnson syndrome, crystalluria", moa: "Blocks sequential steps in bacterial folic acid production", emoji: "🦠" },
+            { name: "Oseltamivir", class: "Antiviral", indication: "Influenza A and B", contraindication: "Hypersensitivity", sideEffect: "GI upset (take with food)", moa: "Inhibits neuraminidase -> stops flu virus spread from cells", emoji: "🦠" },
+
+            // --- NATURAL REMEDIES & HERBALS ---
+            { name: "St. John's Wort", class: "Herbal Supplement", indication: "Mild to moderate depression", contraindication: "SSRIs, MAOIs, Oral Contraceptives", sideEffect: "Serotonin syndrome, photosensitivity", moa: "Inhibits reuptake of serotonin, dopamine, & norepinephrine", emoji: "🌿" },
+            { name: "Ginkgo Biloba", class: "Herbal Supplement", indication: "Memory improvement, claudication", contraindication: "Anticoagulants, NSAIDs", sideEffect: "Increased bleeding risk", moa: "Increases central blood flow & acts as antioxidant", emoji: "🧠" },
+            { name: "Garlic (Supplement)", class: "Herbal Supplement", indication: "Hyperlipidemia, hypertension", contraindication: "Bleeding disorders, surgery", sideEffect: "Increased bleeding risk", moa: "Inhibits HMG-CoA & platelet aggregation -> lowers BP/lipids", emoji: "🧄" },
+            { name: "Echinacea", class: "Herbal Supplement", indication: "Common cold prevention", contraindication: "Autoimmune diseases", sideEffect: "Immunosuppression (long term use)", moa: "Stimulates immune system cells (phagocytes & T-cells)", emoji: "🤧" },
+            { name: "Ginseng", class: "Herbal Supplement", indication: "Fatigue, stress", contraindication: "Anticoagulants, MAOIs", sideEffect: "Insomnia, bleeding risk", moa: "Modulates adrenal function & HPA axis -> boosts energy", emoji: "⚡" },
+            { name: "Valerian Root", class: "Herbal Supplement", indication: "Insomnia, anxiety", contraindication: "CNS depressants (alcohol, benzos)", sideEffect: "Drowsiness, liver toxicity", moa: "Increases GABA concentration in brain -> relaxes CNS", emoji: "😴" },
+            { name: "Black Cohosh", class: "Herbal Supplement", indication: "Menopausal symptoms (hot flashes)", contraindication: "Pregnancy, liver disease", sideEffect: "Hepatotoxicity", moa: "Binds estrogen receptors -> suppresses LH secretion", emoji: "🔥" },
+            { name: "Saw Palmetto", class: "Herbal Supplement", indication: "Benign Prostatic Hyperplasia (BPH)", contraindication: "Pregnancy", sideEffect: "False low PSA levels, GI upset", moa: "Inhibits 5-alpha reductase -> blocks DHT conversion in prostate", emoji: "🚽" },
+            { name: "Kava Kava", class: "Herbal Supplement", indication: "Anxiety, stress", contraindication: "Liver disease, CNS depressants", sideEffect: "Severe hepatotoxicity", moa: "Enhances GABA-A receptor activity -> calms nervous system", emoji: "🥥" },
+            { name: "Feverfew", class: "Herbal Supplement", indication: "Migraine prevention", contraindication: "Pregnancy, anticoagulants", sideEffect: "Bleeding, mouth ulcers", moa: "Inhibits serotonin release & inflammatory prostaglandins", emoji: "🤕" },
+            { name: "Ginger Root", class: "Herbal Supplement", indication: "Nausea, morning sickness", contraindication: "Bleeding disorders", sideEffect: "Increased bleeding risk with NSAIDs", moa: "Blocks serotonin receptors in gut & inhibits prostaglandins", emoji: "🫚" },
+            { name: "Cranberry", class: "Herbal Supplement", indication: "UTI prevention", contraindication: "History of kidney stones", sideEffect: "Dyspepsia, potential stone formation", moa: "Prevents E. coli bacteria from sticking to bladder wall", emoji: "🍒" },
+            { name: "Milk Thistle", class: "Herbal Supplement", indication: "Liver disease, cirrhosis", contraindication: "Allergy to ragweed/daisies", sideEffect: "Mild GI upset", moa: "Antioxidant -> protects liver cell membranes & regenerates", emoji: "🌼" },
+            { name: "Hawthorn", class: "Herbal Supplement", indication: "Mild heart failure, hypertension", contraindication: "Use with Digoxin (risk of toxicity)", sideEffect: "Hypotension, dizziness", moa: "Increases coronary blood flow & heart contraction force", emoji: "❤️" },
+            { name: "Melatonin", class: "Hormone Supplement", indication: "Insomnia, jet lag", contraindication: "Autoimmune diseases, pregnancy", sideEffect: "Daytime drowsiness, vivid dreams", moa: "Binds MT1/MT2 receptors in brain -> sets sleep cycle", emoji: "🌙" },
+            { name: "Glucosamine", class: "Dietary Supplement", indication: "Osteoarthritis joint pain", contraindication: "Shellfish allergy", sideEffect: "Mild GI upset, bleeding risk", moa: "Provides raw building blocks for cartilage repair", emoji: "🦞" },
+            { name: "Aloe Vera", class: "Topical / Herbal", indication: "Burns, wound healing", contraindication: "Deep open wounds", sideEffect: "Skin irritation", moa: "Soothes damaged tissue & reduces inflammation", emoji: "🌿" },
+            { name: "Chamomile", class: "Herbal Supplement", indication: "Insomnia, anxiety", contraindication: "Daisy / Ragweed allergy", sideEffect: "Allergic reactions", moa: "Binds brain GABA receptors -> mild relaxation", emoji: "🌼" },
+            { name: "Peppermint Oil", class: "Herbal Supplement", indication: "Irritable Bowel Syndrome", contraindication: "GERD", sideEffect: "Heartburn", moa: "Relaxes GI smooth muscle -> reduces spasms", emoji: "🌿" },
+            { name: "Turmeric / Curcumin", class: "Herbal Supplement", indication: "Inflammation, arthritis", contraindication: "Gallbladder obstruction", sideEffect: "GI upset, bleeding risk", moa: "Inhibits inflammatory cytokines & COX-2 enzymes", emoji: "🟡" },
+            { name: "Coenzyme Q10", class: "Supplement", indication: "Heart failure, statin muscle aches", contraindication: "Antihypertensives (can lower BP too much)", sideEffect: "Mild GI upset", moa: "Essential cofactor for ATP energy production in heart", emoji: "❤️" },
+            { name: "Ferrous Sulfate (Iron)", class: "Mineral Supplement", indication: "Iron deficiency anemia", contraindication: "Hemochromatosis", sideEffect: "Dark stools, constipation, teeth staining", moa: "Replaces essential iron needed to make hemoglobin", emoji: "🩸" }
         ];
 
         let availableDrugs = [];
+        let activeAspects = [];
         let currentRound = 1;
         let score = 0;
         let mistakes = 0;
         let MAX_MISTAKES = 10; 
-        let currentRankTier = -1; // Tracks current performance tier
+        let currentRankTier = -1; 
         const PAIRS_PER_ROUND = 6; 
 
         let firstCard = null;
@@ -389,7 +573,9 @@
                 'pril', 'sartan', 'olol', 'dipine', 'zosin', 'statin', 
                 'tidine', 'prazole', 'setron', 'pam', 'triptan', 'cillin', 
                 'mycin', 'micin', 'vir', 'thiazide', 'terol', 'tropium', 
-                'azole', 'asone', 'phylline', 'idone', 'triptyline'
+                'azole', 'asone', 'phylline', 'idone', 'triptyline',
+                'floxacin', 'lukast', 'parin', 'plase', 'coxib', 'cycline',
+                'xaban', 'gliptin', 'azepam'
             ];
             const prefixes = ['cef', 'ceph'];
             
@@ -404,6 +590,10 @@
             if (name === "Levodopa/Carbidopa") {
                 return `Levo<span class="stem">dopa</span>/Carbi<span class="stem">dopa</span>`;
             }
+            
+            if (name === "Piperacillin/Tazobactam") {
+                return `Pipera<span class="stem">cillin</span>/Tazobactam`;
+            }
 
             for (let suffix of suffixes) {
                 if (lowerName.endsWith(suffix)) {
@@ -415,37 +605,131 @@
             return name;
         }
 
-        // Percentage-based dynamic ranking system with rotating titles
         function updateRankTitle() {
             let ratio = mistakes / MAX_MISTAKES;
             let newTier = 0;
             
-            if (mistakes === 0) newTier = 0;         // Flawless
-            else if (ratio <= 0.30) newTier = 1;     // Great
-            else if (ratio <= 0.60) newTier = 2;     // Okay
-            else if (ratio <= 0.85) newTier = 3;     // Struggling
-            else newTier = 4;                        // Failing
+            if (mistakes === 0) newTier = 0;         
+            else if (ratio <= 0.30) newTier = 1;     
+            else if (ratio <= 0.60) newTier = 2;     
+            else if (ratio <= 0.85) newTier = 3;     
+            else newTier = 4;                        
             
             if (newTier !== currentRankTier) {
                 currentRankTier = newTier;
                 let titles = [];
                 
                 if (newTier === 0) {
-                    titles = ["NCLEX Grandmaster 👑", "Florence Nightingale Reborn 🕯️", "The 100% ATI Scorer 💯", "Attending Physician of Memory 🧠"];
+                    titles = [
+                        "NCLEX Grandmaster 👑", 
+                        "Florence Nightingale Reborn 🕯️", 
+                        "Dr. House Level Diagnostician 🧠", 
+                        "Clara Barton's Protege 🩸", 
+                        "Hawkeye Pierce in the OR 🚁",
+                        "Sir Alexander Fleming's Lab Partner 🧫",
+                        "Jonas Salk of the Ward 🦠",
+                        "Dr. Cristina Yang's Favorite 🩺"
+                    ];
                 } else if (newTier === 1) {
-                    titles = ["Dean's List Student 📚", "Competent Extern 🩺", "IV Insertion Prodigy 💉", "Acing the HESI 📝"];
+                    titles = [
+                        "Dean's List Student 📚", 
+                        "Competent Extern 🩺", 
+                        "Mary Seacole's Assistant 🍵", 
+                        "Acing the HESI 📝", 
+                        "Dr. Bailey's Favorite Intern 👩‍⚕️",
+                        "Leonard McCoy's Chief Medical Officer 🖖",
+                        "Nurse Jackie's Shift Supervisor 💊",
+                        "Dr. Quinn, Medicine Woman 🐎",
+                        "Walt Whitman's Wound Dresser 📝"
+                    ];
                 } else if (newTier === 2) {
-                    titles = ["Caffeinated Night-Shift ☕", "Surviving on Energy Drinks ⚡", "Slightly Confused Resident 🤨", "Passed by 1 Point 😅"];
+                    titles = [
+                        "Caffeinated Night-Shift ☕", 
+                        "J.D. from Scrubs 🏃", 
+                        "Passed by 1 Point 😅", 
+                        "Slightly Confused Resident 🤨",
+                        "Dr. John Zoidberg on a Good Day 🦀",
+                        "Trainee at Sacred Heart 🏥",
+                        "Dr. Mario's Study Buddy 🍄",
+                        "Patch Adams in Training 🤡"
+                    ];
                 } else if (newTier === 3) {
-                    titles = ["Relying on Quizlet 😰", "Tiktok Diagnostician 📱", "WebMD Enthusiast 💻", "Googling Symptoms 🔍"];
+                    titles = [
+                        "Tiktok Diagnostician 📱", 
+                        "Dr. Nick Riviera Level Care 🤦", 
+                        "WebMD Enthusiast 💻", 
+                        "Googling Symptoms 🔍",
+                        "Gomer Pyle's Swamp Tent Medic ⛺",
+                        "Dr. Leo Spaceman's Intern 🚀",
+                        "Consulting Dr. Google 📱"
+                    ];
                 } else {
-                    titles = ["Consulting Crystal Healers 🔮", "Essential Oils Expert 🌿", "Code Blue in the Brain 🚨", "Placebo Prescriber 🍬"];
+                    titles = [
+                        "Consulting Crystal Healers 🔮", 
+                        "Dr. Spaceman's Assistant 🚀", 
+                        "Placebo Prescriber 🍬", 
+                        "Code Blue in the Brain 🚨",
+                        "The Plague Doctor 🐦‍⬛",
+                        "Bloodletting Barber-Surgeon 🩸",
+                        "Zoidberg's Malpractice Lawyer 🦀",
+                        "TF2 Medic Without a Medigun 🕊️",
+                        "Dr. Zed's Unlicensed Clinic 🩹"
+                    ];
                 }
                 
-                // Randomly select title from the new tier
                 let newTitle = titles[Math.floor(Math.random() * titles.length)];
                 document.getElementById('rank-title').innerText = newTitle;
             }
+        }
+
+        // Leaderboard generation function
+        function generateLeaderboard(playerScore, playerRank) {
+            const fakeNames = [
+                "Florence Nightingale", "Gregory House", "Perry Cox", 
+                "Cristina Yang", "Clara Barton", "Leonard McCoy", 
+                "John Dorian", "Nick Riviera", "John Zoidberg", 
+                "Leo Spaceman", "Miranda Bailey", "Hawkeye Pierce",
+                "Patch Adams", "Mary Seacole", "Alexander Fleming",
+                "Jonas Salk", "Walt Whitman"
+            ];
+            let leaderboard = [];
+
+            // Add player
+            leaderboard.push({ name: "YOU", score: playerScore, rank: playerRank, isPlayer: true });
+
+            // Generate 4 fake scores around the player
+            for (let i = 0; i < 4; i++) {
+                let name = fakeNames[Math.floor(Math.random() * fakeNames.length)];
+                let randomOffset = Math.floor(Math.random() * 2000) - 800; // -800 to +1200
+                let fakeScore = Math.max(0, playerScore + randomOffset);
+                let fakeRank = "Competitor";
+                
+                if (fakeScore > playerScore + 1000) fakeRank = "Attending 👑";
+                else if (fakeScore > playerScore) fakeRank = "Resident 🩺";
+                else if (fakeScore > playerScore - 500) fakeRank = "Intern 📝";
+                else fakeRank = "Medical Menace 🤦";
+
+                leaderboard.push({ name: name, score: fakeScore, rank: fakeRank, isPlayer: false });
+            }
+
+            // Sort descending
+            leaderboard.sort((a, b) => b.score - a.score);
+
+            let html = `<table class="leaderboard-table">
+                <tr><th>#</th><th>NAME</th><th>SCORE</th><th>TITLE</th></tr>`;
+            
+            leaderboard.forEach((entry, index) => {
+                let rowClass = entry.isPlayer ? 'class="player-row"' : '';
+                html += `<tr ${rowClass}>
+                    <td>${index + 1}</td>
+                    <td>${entry.name}</td>
+                    <td>${entry.score}</td>
+                    <td>${entry.rank}</td>
+                </tr>`;
+            });
+            
+            html += `</table>`;
+            return html;
         }
 
         function shuffle(array) {
@@ -463,16 +747,40 @@
             document.getElementById('start-screen').classList.remove('hidden');
         }
 
-        function startGame(difficulty) {
+        function selectDifficulty(difficulty) {
             MAX_MISTAKES = difficulty;
             document.getElementById('max-mistakes').innerText = MAX_MISTAKES;
             document.getElementById('start-screen').classList.add('hidden');
+            document.getElementById('category-screen').classList.remove('hidden');
+        }
+
+        function toggleAllCategories(state) {
+            const checkboxes = document.querySelectorAll('.aspect-checkbox');
+            checkboxes.forEach(box => box.checked = state);
+            document.getElementById('category-error').style.display = 'none';
+        }
+
+        function beginClinicalRotation() {
+            const checkboxes = document.querySelectorAll('.aspect-checkbox');
+            activeAspects = [];
+            checkboxes.forEach(box => {
+                if (box.checked) {
+                    activeAspects.push(box.value);
+                }
+            });
+
+            if (activeAspects.length === 0) {
+                document.getElementById('category-error').style.display = 'block';
+                return;
+            }
+
+            document.getElementById('category-screen').classList.add('hidden');
             
             availableDrugs = shuffle([...fullDatabase]);
             score = 0;
             mistakes = 0;
             currentRound = 1;
-            currentRankTier = -1; // Force title refresh
+            currentRankTier = -1; 
             
             document.getElementById('score').innerText = score;
             document.getElementById('mistakes').innerText = mistakes;
@@ -497,20 +805,23 @@
             lockBoard = false;
 
             if (availableDrugs.length < PAIRS_PER_ROUND) {
-                showOverlay("DATABASE MASTERED", `You memorized the whole database!\nFinal Score: ${score}\nFinal Rank: ${document.getElementById('rank-title').innerText}\nGo crush the NCLEX!`, true);
+                const rank = document.getElementById('rank-title').innerText;
+                let msg = `You memorized the entire database! Incredible work.<br>`;
+                msg += generateLeaderboard(score, rank);
+                showOverlay("DATABASE MASTERED", msg, true);
                 return;
             }
 
             const roundDrugs = availableDrugs.splice(0, PAIRS_PER_ROUND);
 
-            const aspects = ['class', 'indication', 'contraindication', 'sideEffect'];
-            const testedAspect = aspects[Math.floor(Math.random() * aspects.length)];
+            const testedAspect = activeAspects[Math.floor(Math.random() * activeAspects.length)];
             
             let aspectName = "";
             if(testedAspect === 'class') aspectName = "PHARMACOLOGIC CLASS";
             if(testedAspect === 'indication') aspectName = "INDICATION / USE";
             if(testedAspect === 'contraindication') aspectName = "CONTRAINDICATION";
             if(testedAspect === 'sideEffect') aspectName = "KEY ADVERSE EFFECT";
+            if(testedAspect === 'moa') aspectName = "MECHANISM OF ACTION (MOA)";
 
             const terminal = document.getElementById('knowledge-terminal');
             terminal.style.color = "var(--primary-color)";
@@ -593,7 +904,7 @@
             terminal.style.color = "var(--primary-color)";
             
             if (matchesFound === PAIRS_PER_ROUND) {
-                terminal.innerHTML = `<div>> UNLOCKED: <strong>${highlightStem(drug.name)}</strong> (${drug.class}). Uses: ${drug.indication}. Avoid in: ${drug.contraindication}. Watch for: ${drug.sideEffect}.</div><div class="blink">[TAP ANYWHERE FOR NEXT ROUND]</div>`;
+                terminal.innerHTML = `<div>> UNLOCKED: <strong>${highlightStem(drug.name)}</strong> (${drug.class}).<br>MOA: ${drug.moa}.<br>Uses: ${drug.indication}. Avoid in: ${drug.contraindication}. Watch for: ${drug.sideEffect}.</div><div class="blink">[TAP ANYWHERE FOR NEXT ROUND]</div>`;
                 terminal.classList.add('clickable-terminal');
                 blocker.classList.remove('hidden'); 
                 
@@ -610,7 +921,7 @@
                     setupRound();
                 };
             } else {
-                terminal.innerHTML = `> UNLOCKED: <strong>${highlightStem(drug.name)}</strong> (${drug.class}).<br>Uses: ${drug.indication}. Avoid in: ${drug.contraindication}. Watch for: ${drug.sideEffect}.`;
+                terminal.innerHTML = `> UNLOCKED: <strong>${highlightStem(drug.name)}</strong> (${drug.class}).<br>MOA: ${drug.moa}.<br>Uses: ${drug.indication}. Avoid in: ${drug.contraindication}. Watch for: ${drug.sideEffect}.`;
                 resetBoard();
             }
         }
@@ -659,7 +970,8 @@
 
         function showGameOver() {
             const rank = document.getElementById('rank-title').innerText;
-            const msg = `CLINICAL FAILURE.<br>Maximum errors reached. You just failed your clinical rotation.<br><br>Final Score: ${score}<br>Rank Achieved: ${rank}`;
+            let msg = `CLINICAL FAILURE.<br>Maximum errors reached. You failed your clinical rotation.<br>`;
+            msg += generateLeaderboard(score, rank);
             showOverlay("GAME OVER", msg, false);
         }
 
