@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Retro Med-Match: Ultimate NCLEX Edition</title>
+    <style>
+        :root {
+            --bg-color: #050510;
+            --primary-color: #00ffcc; /* Neon Teal */
+            --secondary-color: #ff00ff; /* Neon Pink */
+            --danger-color: #ff3333; /* Neon Red */
+            --stem-color: #ffff00; /* Neon Yellow for Stems */
+            --card-bg: #111;
+            --text-font: 'Courier New', Courier, monospace;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--primary-color);
+            font-family: var(--text-font);
+            margin: 0;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+
+        h1 {
+            text-align: center;
+            text-shadow: 0 0 10px var(--primary-color);
+            margin: 5px 0 15px 0;
+            font-size: 2.5em;
+        }
+
+        .stats-container {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            max-width: 900px;
+            border: 2px solid var(--primary-color);
+            padding: 10px;
+            margin-bottom: 15px;
+            background: #000;
+            box-shadow: 0 0 10px var(--primary-color);
+            box-sizing: border-box;
+        }
+
+        .stats-item {
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+
+        #rank-title {
+            color: var(--secondary-color);
+            text-shadow: 0 0 5px var(--secondary-color);
+        }
+
+        .stem {
+            color: var(--stem-color);
+            text-shadow: 0 0 5px var(--stem-color);
+            font-weight: 900;
+        }
+
+        #knowledge-terminal {
+            width: 100%;
+            max-width: 900px;
+            min-height: 60px;
+            border: 1px dashed var(--primary-color);
+            padding: 10px;
+            margin-bottom: 15px;
+            background: #001100;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            font-size: 1.1em;
+            line-height: 1.4;
+            transition: all 0.3s ease;
+            box-sizing: border-box;
+        }
+
+        .clickable-terminal {
+            border: 2px solid var(--primary-color) !important;
+            box-shadow: 0 0 15px var(--primary-color) !important;
+            background: #002211 !important;
+        }
+
+        .clickable-terminal.error-state {
+            border: 2px solid var(--danger-color) !important;
+            box-shadow: 0 0 15px var(--danger-color) !important;
+            background: #220000 !important;
+        }
+
+        .blink {
+            animation: blinker 1.5s linear infinite;
+            font-weight: bold;
+            margin-top: 5px;
+            text-decoration: underline;
+        }
+
+        @keyframes blinker {
+            50% { opacity: 0.3; }
+        }
+
+        #click-blocker {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            z-index: 999;
+            background: transparent;
+            cursor: pointer;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            max-width: 900px;
+            width: 100%;
+            perspective: 1000px;
+        }
+
+        .card {
+            width: 100%;
+            height: 130px;
+            position: relative;
+            cursor: pointer;
+            transform-style: preserve-3d;
+            transition: transform 0.4s;
+        }
+
+        .card.flipped {
+            transform: rotateY(180deg);
+        }
+
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 8px;
+            box-sizing: border-box;
+            border: 2px solid var(--primary-color);
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 0.9em;
+            background-color: var(--card-bg);
+            box-shadow: inset 0 0 10px rgba(0, 255, 204, 0.2);
+            overflow: hidden;
+        }
+
+        .card-front {
+            font-size: 3em;
+            color: var(--secondary-color);
+            border-color: var(--secondary-color);
+            box-shadow: inset 0 0 10px rgba(255, 0, 255, 0.2);
+        }
+
+        .card-back {
+            transform: rotateY(180deg);
+            background-color: #002233;
+            color: #fff;
+        }
+
+        .card.matched .card-back {
+            background-color: #000;
+            border-color: #555;
+            color: #555;
+            box-shadow: none;
+            cursor: default;
+        }
+
+        /* Fullscreen Overlays (Start Screen & Game Over) */
+        .fullscreen-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.98);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            text-align: center;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .fullscreen-overlay h2 {
+            font-size: 3em;
+            margin-bottom: 20px;
+            color: var(--primary-color);
+            text-shadow: 0 0 10px var(--primary-color);
+        }
+
+        .fullscreen-overlay p {
+            font-size: 1.5em;
+            max-width: 600px;
+            line-height: 1.5;
+            padding: 0 20px;
+            margin-bottom: 30px;
+        }
+
+        button {
+            margin: 10px;
+            padding: 15px 30px;
+            font-family: var(--text-font);
+            font-size: 1.2em;
+            font-weight: bold;
+            background-color: #000;
+            color: var(--primary-color);
+            border: 2px solid var(--primary-color);
+            cursor: pointer;
+            box-shadow: 0 0 10px var(--primary-color);
+            transition: all 0.2s;
+            width: 80%;
+            max-width: 400px;
+        }
+
+        button:hover {
+            background-color: var(--primary-color);
+            color: #000;
+        }
+
+        .btn-easy { border-color: var(--primary-color); color: var(--primary-color); box-shadow: 0 0 10px var(--primary-color); }
+        .btn-med { border-color: var(--stem-color); color: var(--stem-color); box-shadow: 0 0 10px var(--stem-color); }
+        .btn-hard { border-color: var(--danger-color); color: var(--danger-color); box-shadow: 0 0 10px var(--danger-color); }
+
+        .btn-easy:hover { background-color: var(--primary-color); color: #000; }
+        .btn-med:hover { background-color: var(--stem-color); color: #000; }
+        .btn-hard:hover { background-color: var(--danger-color); color: #000; }
+
+        @media (max-width: 768px) {
+            h1 { font-size: 2em; margin-bottom: 10px; }
+            .grid { grid-template-columns: repeat(3, 1fr); gap: 10px; }
+            .card { height: 110px; }
+            .card-face { font-size: 0.8em; }
+            .stats-item { font-size: 1em; }
+            #knowledge-terminal { font-size: 0.95em; }
+            .fullscreen-overlay h2 { font-size: 2.2em; }
+        }
+
+        @media (max-width: 480px) {
+            h1 { font-size: 1.5em; }
+            .grid { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+            .card { height: 95px; } 
+            .card-face { font-size: 0.7em; padding: 4px; }
+            .card-front { font-size: 2em; }
+            .stats-container { flex-direction: column; text-align: center; gap: 5px; padding: 8px; }
+            .stats-item { font-size: 0.9em; }
+            #knowledge-terminal { font-size: 0.85em; min-height: 50px; padding: 8px; }
+            button { padding: 12px 20px; font-size: 1em; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- START SCREEN -->
+    <div id="start-screen" class="fullscreen-overlay">
+        <h2>[ MED-MATCH: NCLEX ]</h2>
+        <p>Select Your Clinical Rotation Difficulty:</p>
+        <button class="btn-easy" onclick="startGame(20)">EASY (20 Errors Allowed)</button>
+        <button class="btn-med" onclick="startGame(15)">MEDIUM (15 Errors Allowed)</button>
+        <button class="btn-hard" onclick="startGame(10)">HARD (10 Errors Allowed)</button>
+    </div>
+
+    <h1>[ MED-MATCH: NCLEX ]</h1>
+    
+    <div class="stats-container">
+        <div class="stats-item">SCORE: <span id="score">0</span></div>
+        <div class="stats-item">ERRORS: <span id="mistakes">0</span>/<span id="max-mistakes">10</span></div>
+        <div class="stats-item">RANK: <span id="rank-title">Awaiting Assignment...</span></div>
+    </div>
+
+    <div id="knowledge-terminal">
+        > SYSTEM BOOTED. Parsing massive NCLEX Database... Awaiting first input.
+    </div>
+
+    <div class="grid" id="game-board"></div>
+
+    <div id="click-blocker" class="hidden"></div>
+
+    <!-- GAME OVER / REBOOT OVERLAY -->
+    <div id="overlay" class="fullscreen-overlay hidden">
+        <h2 id="overlay-title">GAME OVER</h2>
+        <p id="overlay-message">Message goes here.</p>
+        <button id="overlay-btn" onclick="returnToMenu()">MAIN MENU</button>
+    </div>
+
+    <script>
+        const fullDatabase = [
+            // --- CARDIOVASCULAR ---
+            { name: "Lisinopril", class: "ACE Inhibitor", indication: "Hypertension, HF, post-MI", contraindication: "Pregnancy, angioedema", sideEffect: "Dry cough, hyperkalemia", emoji: "🫀" },
+            { name: "Losartan", class: "ARB", indication: "Hypertension, heart failure", contraindication: "Pregnancy", sideEffect: "Angioedema, hypotension", emoji: "🩸" },
+            { name: "Metoprolol", class: "Beta-1 Blocker", indication: "Hypertension, angina", contraindication: "Bradycardia, heart block", sideEffect: "Masks signs of hypoglycemia", emoji: "📉" },
+            { name: "Nifedipine", class: "Calcium Channel Blocker", indication: "Hypertension, angina", contraindication: "Heart block, severe HF", sideEffect: "Peripheral edema", emoji: "🦵" },
+            { name: "Prazosin", class: "Alpha-1 Blocker", indication: "Hypertension, BPH", contraindication: "Hypotension", sideEffect: "First-dose orthostatic hypotension", emoji: "😵" },
+            { name: "Atorvastatin", class: "HMG-CoA Reductase Inhibitor", indication: "Hypercholesterolemia", contraindication: "Pregnancy, active liver disease", sideEffect: "Muscle aches, rhabdomyolysis", emoji: "💪" },
+            { name: "Digoxin", class: "Cardiac Glycoside", indication: "Heart failure, A-fib", contraindication: "V-fib, heart block", sideEffect: "Visual halos (yellow/green)", emoji: "👀" },
+            { name: "Nitroglycerin", class: "Organic Nitrate", indication: "Angina (acute & prophylaxis)", contraindication: "Traumatic head injury", sideEffect: "Severe headache, reflex tachycardia", emoji: "🤕" },
+            { name: "Amiodarone", class: "Potassium Channel Blocker", indication: "V-fib, unstable V-tach", contraindication: "Bradycardia, heart block", sideEffect: "Blue-gray skin, pulmonary toxicity", emoji: "🫁" },
+            
+            // --- HEMATOLOGIC / IMMUNE ---
+            { name: "Heparin", class: "Anticoagulant", indication: "DVT, PE, stroke, MI", contraindication: "Active bleeding", sideEffect: "Bleeding, HIT", emoji: "🩸" },
+            { name: "Warfarin", class: "Vitamin K Antagonist", indication: "VTE, A-fib, prosthetic valves", contraindication: "Pregnancy (teratogenic)", sideEffect: "Hemorrhage, hepatitis", emoji: "⚠️" },
+            { name: "Clopidogrel", class: "Antiplatelet", indication: "Prevention of MI, stroke", contraindication: "Active bleeding", sideEffect: "Prolonged bleeding time", emoji: "🛑" },
+            { name: "Epoetin alfa", class: "Erythropoietic Growth Factor", indication: "Anemia (CKD, chemotherapy)", contraindication: "Uncontrolled hypertension", sideEffect: "Hypertension, DVT risk", emoji: "📈" },
+            { name: "Methotrexate", class: "DMARD / Antimetabolite", indication: "Rheumatoid arthritis, cancer", contraindication: "Pregnancy", sideEffect: "Bone marrow suppression", emoji: "🦴" },
+
+            // --- ENDOCRINE ---
+            { name: "Metformin", class: "Biguanide", indication: "Type 2 Diabetes Mellitus", contraindication: "Severe renal dysfunction", sideEffect: "Lactic acidosis, GI upset", emoji: "🍬" },
+            { name: "Regular Insulin", class: "Short-Acting Insulin", indication: "Diabetes Mellitus, hyperkalemia", contraindication: "Hypoglycemia", sideEffect: "Hypoglycemia, lipohypertrophy", emoji: "💉" },
+            { name: "Levothyroxine", class: "Thyroid Hormone", indication: "Hypothyroidism", contraindication: "Thyrotoxicosis, recent MI", sideEffect: "Signs of hyperthyroidism", emoji: "🦋" },
+            { name: "Glipizide", class: "Sulfonylurea", indication: "Type 2 Diabetes", contraindication: "Sulfa allergy", sideEffect: "Hypoglycemia, weight gain", emoji: "📉" },
+
+            // --- RENAL ---
+            { name: "Furosemide", class: "Loop Diuretic", indication: "Pulmonary edema, HF", contraindication: "Anuria, hepatic coma", sideEffect: "Hypokalemia, ototoxicity", emoji: "👂" },
+            { name: "Hydrochlorothiazide", class: "Thiazide Diuretic", indication: "Hypertension, mild edema", contraindication: "Anuria, severe renal impairment", sideEffect: "Hypokalemia, hyperglycemia", emoji: "🚽" },
+            { name: "Spironolactone", class: "Potassium-Sparing Diuretic", indication: "Heart failure, hypertension", contraindication: "Hyperkalemia", sideEffect: "Hyperkalemia, gynecomastia", emoji: "🍌" },
+
+            // --- RESPIRATORY ---
+            { name: "Albuterol", class: "Beta-2 Agonist", indication: "Asthma (rescue), COPD", contraindication: "Tachydysrhythmias", sideEffect: "Tachycardia, tremors", emoji: "🫁" },
+            { name: "Ipratropium", class: "Anticholinergic", indication: "COPD, asthma", contraindication: "Peanut/soy allergy", sideEffect: "Dry mouth, hoarseness", emoji: "🥜" },
+            { name: "Fluticasone", class: "Glucocorticoid", indication: "Asthma (maintenance)", contraindication: "Systemic fungal infection", sideEffect: "Oral candidiasis, bone loss", emoji: "👅" },
+            { name: "Theophylline", class: "Methylxanthine", indication: "Long-term asthma/COPD", contraindication: "Peptic ulcer disease", sideEffect: "Seizures, tachycardia", emoji: "☕" },
+
+            // --- GASTROINTESTINAL ---
+            { name: "Omeprazole", class: "Proton Pump Inhibitor", indication: "GERD, gastric ulcers", contraindication: "Hypersensitivity", sideEffect: "Bone loss, C. diff risk", emoji: "🔥" },
+            { name: "Famotidine", class: "H2 Antagonist", indication: "Ulcers, GERD", contraindication: "Kidney/liver dysfunction", sideEffect: "CNS effects in elderly", emoji: "🥱" },
+            { name: "Ondansetron", class: "Serotonin Antagonist", indication: "Nausea, vomiting", contraindication: "Prolonged QT interval", sideEffect: "QT prolongation, headache", emoji: "🤮" },
+            { name: "Sucralfate", class: "Mucosal Protectant", indication: "Gastric/duodenal ulcers", contraindication: "Renal failure", sideEffect: "Constipation", emoji: "🛡️" },
+
+            // --- NEURO / PSYCH ---
+            { name: "Diazepam", class: "Benzodiazepine", indication: "Anxiety, seizures, spasms", contraindication: "Glaucoma, sleep apnea", sideEffect: "CNS depression", emoji: "😴" },
+            { name: "Fluoxetine", class: "SSRI", indication: "Depression, anxiety, OCD", contraindication: "MAOI use", sideEffect: "Sexual dysfunction, Serotonin Syndrome", emoji: "🧠" },
+            { name: "Lithium", class: "Mood Stabilizer", indication: "Bipolar disorder", contraindication: "Severe renal disease", sideEffect: "Fine hand tremors, polyuria", emoji: "🫨" },
+            { name: "Phenytoin", class: "Antiepileptic", indication: "Seizures (tonic-clonic)", contraindication: "Sinus bradycardia", sideEffect: "Gingival hyperplasia", emoji: "🦷" },
+            { name: "Risperidone", class: "Atypical Antipsychotic", indication: "Schizophrenia, bipolar", contraindication: "Dementia-related psychosis", sideEffect: "Weight gain, mild EPS", emoji: "⚖️" },
+            { name: "Haloperidol", class: "Typical Antipsychotic", indication: "Schizophrenia, Tourette's", contraindication: "Parkinson's disease", sideEffect: "Extrapyramidal symptoms (EPS)", emoji: "🤖" },
+            { name: "Zolpidem", class: "Sedative-Hypnotic", indication: "Insomnia", contraindication: "Sleep apnea", sideEffect: "Sleepwalking, amnesia", emoji: "🛌" },
+            { name: "Levodopa/Carbidopa", class: "Dopamine Agonist", indication: "Parkinson's disease", contraindication: "Glaucoma, MAOI use", sideEffect: "Dyskinesias, dark urine", emoji: "🚶" },
+            { name: "Amitriptyline", class: "Tricyclic Antidepressant", indication: "Depression, neuropathy", contraindication: "Recent MI", sideEffect: "Anticholinergic effects", emoji: "🏜️" },
+
+            // --- PAIN / MUSCULOSKELETAL ---
+            { name: "Morphine", class: "Opioid Agonist", indication: "Moderate to severe pain", contraindication: "Severe asthma, paralytic ileus", sideEffect: "Respiratory depression, constipation", emoji: "🛌" },
+            { name: "Naloxone", class: "Opioid Antagonist", indication: "Opioid overdose", contraindication: "Opioid dependency", sideEffect: "Tachycardia, acute withdrawal", emoji: "🚨" },
+            { name: "Aspirin", class: "Salicylate / NSAID", indication: "Pain, MI prevention", contraindication: "Children (Reye's syndrome)", sideEffect: "Tinnitus, GI bleed", emoji: "🔔" },
+            { name: "Acetaminophen", class: "Non-opioid Analgesic", indication: "Mild pain, fever", contraindication: "Severe liver impairment", sideEffect: "Hepatotoxicity", emoji: "🌡️" },
+            { name: "Sumatriptan", class: "Serotonin Agonist", indication: "Migraine (abortive)", contraindication: "Ischemic heart disease", sideEffect: "Chest pressure", emoji: "🤕" },
+            { name: "Allopurinol", class: "Xanthine Oxidase Inhibitor", indication: "Chronic gout", contraindication: "Idiopathic hemochromatosis", sideEffect: "Stevens-Johnson syndrome", emoji: "🦶" },
+
+            // --- MATERNAL / NEWBORN ---
+            { name: "Oxytocin", class: "Uterine Stimulant", indication: "Induction of labor, PPH", contraindication: "Fetal distress", sideEffect: "Uterine tachysystole", emoji: "👶" },
+            { name: "Magnesium Sulfate", class: "Tocolytic / Anticonvulsant", indication: "Preeclampsia, preterm labor", contraindication: "Myasthenia gravis", sideEffect: "Loss of DTRs, respiratory depression", emoji: "🤰" },
+
+            // --- INFECTIOUS DISEASE (ANTIBIOTICS / ANTIVIRALS) ---
+            { name: "Amoxicillin", class: "Penicillin Antibiotic", indication: "Bacterial infections", contraindication: "Severe penicillin allergy", sideEffect: "Anaphylaxis, superinfection", emoji: "🦠" },
+            { name: "Vancomycin", class: "Glycopeptide Antibiotic", indication: "MRSA, C. diff", contraindication: "Corn allergy", sideEffect: "Red Man Syndrome, ototoxicity", emoji: "🔴" },
+            { name: "Gentamicin", class: "Aminoglycoside Antibiotic", indication: "Severe gram-neg infections", contraindication: "Hearing loss", sideEffect: "Ototoxicity, nephrotoxicity", emoji: "⚠️" },
+            { name: "Metronidazole", class: "Antiprotozoal Antibiotic", indication: "Trichomoniasis, C. diff", contraindication: "First trimester of pregnancy", sideEffect: "Metallic taste, disulfiram reaction", emoji: "🤢" },
+            { name: "Acyclovir", class: "Antiviral", indication: "Herpes simplex, VZV", contraindication: "Renal impairment", sideEffect: "Phlebitis, nephrotoxicity", emoji: "🧬" }
+        ];
+
+        let availableDrugs = [];
+        let currentRound = 1;
+        let score = 0;
+        let mistakes = 0;
+        let MAX_MISTAKES = 10; 
+        let currentRankTier = -1; // Tracks current performance tier
+        const PAIRS_PER_ROUND = 6; 
+
+        let firstCard = null;
+        let secondCard = null;
+        let lockBoard = false;
+        let matchesFound = 0;
+
+        function highlightStem(name) {
+            const suffixes = [
+                'pril', 'sartan', 'olol', 'dipine', 'zosin', 'statin', 
+                'tidine', 'prazole', 'setron', 'pam', 'triptan', 'cillin', 
+                'mycin', 'micin', 'vir', 'thiazide', 'terol', 'tropium', 
+                'azole', 'asone', 'phylline', 'idone', 'triptyline'
+            ];
+            const prefixes = ['cef', 'ceph'];
+            
+            let lowerName = name.toLowerCase();
+            
+            for (let prefix of prefixes) {
+                if (lowerName.startsWith(prefix)) {
+                    return `<span class="stem">${name.substring(0, prefix.length)}</span>${name.substring(prefix.length)}`;
+                }
+            }
+            
+            if (name === "Levodopa/Carbidopa") {
+                return `Levo<span class="stem">dopa</span>/Carbi<span class="stem">dopa</span>`;
+            }
+
+            for (let suffix of suffixes) {
+                if (lowerName.endsWith(suffix)) {
+                    let splitIdx = name.length - suffix.length;
+                    return `${name.substring(0, splitIdx)}<span class="stem">${name.substring(splitIdx)}</span>`;
+                }
+            }
+            
+            return name;
+        }
+
+        // Percentage-based dynamic ranking system with rotating titles
+        function updateRankTitle() {
+            let ratio = mistakes / MAX_MISTAKES;
+            let newTier = 0;
+            
+            if (mistakes === 0) newTier = 0;         // Flawless
+            else if (ratio <= 0.30) newTier = 1;     // Great
+            else if (ratio <= 0.60) newTier = 2;     // Okay
+            else if (ratio <= 0.85) newTier = 3;     // Struggling
+            else newTier = 4;                        // Failing
+            
+            if (newTier !== currentRankTier) {
+                currentRankTier = newTier;
+                let titles = [];
+                
+                if (newTier === 0) {
+                    titles = ["NCLEX Grandmaster 👑", "Florence Nightingale Reborn 🕯️", "The 100% ATI Scorer 💯", "Attending Physician of Memory 🧠"];
+                } else if (newTier === 1) {
+                    titles = ["Dean's List Student 📚", "Competent Extern 🩺", "IV Insertion Prodigy 💉", "Acing the HESI 📝"];
+                } else if (newTier === 2) {
+                    titles = ["Caffeinated Night-Shift ☕", "Surviving on Energy Drinks ⚡", "Slightly Confused Resident 🤨", "Passed by 1 Point 😅"];
+                } else if (newTier === 3) {
+                    titles = ["Relying on Quizlet 😰", "Tiktok Diagnostician 📱", "WebMD Enthusiast 💻", "Googling Symptoms 🔍"];
+                } else {
+                    titles = ["Consulting Crystal Healers 🔮", "Essential Oils Expert 🌿", "Code Blue in the Brain 🚨", "Placebo Prescriber 🍬"];
+                }
+                
+                // Randomly select title from the new tier
+                let newTitle = titles[Math.floor(Math.random() * titles.length)];
+                document.getElementById('rank-title').innerText = newTitle;
+            }
+        }
+
+        function shuffle(array) {
+            let currentIndex = array.length, randomIndex;
+            while (currentIndex !== 0) {
+                randomIndex = Math.floor(Math.random() * currentIndex);
+                currentIndex--;
+                [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
+            }
+            return array;
+        }
+
+        function returnToMenu() {
+            document.getElementById('overlay').classList.add('hidden');
+            document.getElementById('start-screen').classList.remove('hidden');
+        }
+
+        function startGame(difficulty) {
+            MAX_MISTAKES = difficulty;
+            document.getElementById('max-mistakes').innerText = MAX_MISTAKES;
+            document.getElementById('start-screen').classList.add('hidden');
+            
+            availableDrugs = shuffle([...fullDatabase]);
+            score = 0;
+            mistakes = 0;
+            currentRound = 1;
+            currentRankTier = -1; // Force title refresh
+            
+            document.getElementById('score').innerText = score;
+            document.getElementById('mistakes').innerText = mistakes;
+            
+            const terminal = document.getElementById('knowledge-terminal');
+            terminal.style.color = "var(--primary-color)";
+            terminal.innerHTML = "> SYSTEM REBOOTED. Match the cards to bypass security protocols.";
+            terminal.classList.remove('clickable-terminal', 'error-state');
+            
+            document.getElementById('click-blocker').classList.add('hidden');
+            
+            updateRankTitle();
+            setupRound();
+        }
+
+        function setupRound() {
+            const board = document.getElementById('game-board');
+            board.innerHTML = '';
+            matchesFound = 0;
+            firstCard = null;
+            secondCard = null;
+            lockBoard = false;
+
+            if (availableDrugs.length < PAIRS_PER_ROUND) {
+                showOverlay("DATABASE MASTERED", `You memorized the whole database!\nFinal Score: ${score}\nFinal Rank: ${document.getElementById('rank-title').innerText}\nGo crush the NCLEX!`, true);
+                return;
+            }
+
+            const roundDrugs = availableDrugs.splice(0, PAIRS_PER_ROUND);
+
+            const aspects = ['class', 'indication', 'contraindication', 'sideEffect'];
+            const testedAspect = aspects[Math.floor(Math.random() * aspects.length)];
+            
+            let aspectName = "";
+            if(testedAspect === 'class') aspectName = "PHARMACOLOGIC CLASS";
+            if(testedAspect === 'indication') aspectName = "INDICATION / USE";
+            if(testedAspect === 'contraindication') aspectName = "CONTRAINDICATION";
+            if(testedAspect === 'sideEffect') aspectName = "KEY ADVERSE EFFECT";
+
+            const terminal = document.getElementById('knowledge-terminal');
+            terminal.style.color = "var(--primary-color)";
+            terminal.innerHTML = `> ROUND ${currentRound}: Match the Drug to its <strong>${aspectName}</strong>!`;
+
+            let cardData = [];
+
+            roundDrugs.forEach(drug => {
+                cardData.push({
+                    id: drug.name,
+                    text: `${highlightStem(drug.name)} 💊`,
+                    drugObj: drug
+                });
+                
+                cardData.push({
+                    id: drug.name,
+                    text: `${drug[testedAspect]} ${drug.emoji}`,
+                    drugObj: drug
+                });
+            });
+
+            cardData = shuffle(cardData);
+
+            cardData.forEach((card) => {
+                const cardEl = document.createElement('div');
+                cardEl.classList.add('card');
+                cardEl.dataset.nameId = card.id;
+                cardEl.dataset.fullObj = JSON.stringify(card.drugObj);
+
+                cardEl.innerHTML = `
+                    <div class="card-face card-front">?</div>
+                    <div class="card-face card-back">${card.text}</div>
+                `;
+
+                cardEl.addEventListener('click', flipCard);
+                board.appendChild(cardEl);
+            });
+        }
+
+        function flipCard() {
+            if (lockBoard) return;
+            if (this === firstCard) return;
+
+            this.classList.add('flipped');
+
+            if (!firstCard) {
+                firstCard = this;
+                return;
+            }
+
+            secondCard = this;
+            checkForMatch();
+        }
+
+        function checkForMatch() {
+            const isMatch = firstCard.dataset.nameId === secondCard.dataset.nameId;
+
+            if (isMatch) {
+                disableCards();
+            } else {
+                unflipCards();
+            }
+        }
+
+        function disableCards() {
+            firstCard.removeEventListener('click', flipCard);
+            secondCard.removeEventListener('click', flipCard);
+
+            firstCard.classList.add('matched');
+            secondCard.classList.add('matched');
+
+            score += 100;
+            document.getElementById('score').innerText = score;
+            matchesFound++;
+
+            const drug = JSON.parse(firstCard.dataset.fullObj);
+            const terminal = document.getElementById('knowledge-terminal');
+            const blocker = document.getElementById('click-blocker');
+            
+            terminal.style.color = "var(--primary-color)";
+            
+            if (matchesFound === PAIRS_PER_ROUND) {
+                terminal.innerHTML = `<div>> UNLOCKED: <strong>${highlightStem(drug.name)}</strong> (${drug.class}). Uses: ${drug.indication}. Avoid in: ${drug.contraindication}. Watch for: ${drug.sideEffect}.</div><div class="blink">[TAP ANYWHERE FOR NEXT ROUND]</div>`;
+                terminal.classList.add('clickable-terminal');
+                blocker.classList.remove('hidden'); 
+                
+                blocker.onclick = () => {
+                    blocker.onclick = null;
+                    blocker.classList.add('hidden');
+                    terminal.classList.remove('clickable-terminal');
+                    
+                    mistakes = Math.round(mistakes / 2);
+                    document.getElementById('mistakes').innerText = mistakes;
+                    updateRankTitle(); 
+                    
+                    currentRound++;
+                    setupRound();
+                };
+            } else {
+                terminal.innerHTML = `> UNLOCKED: <strong>${highlightStem(drug.name)}</strong> (${drug.class}).<br>Uses: ${drug.indication}. Avoid in: ${drug.contraindication}. Watch for: ${drug.sideEffect}.`;
+                resetBoard();
+            }
+        }
+
+        function unflipCards() {
+            lockBoard = true;
+            mistakes++;
+            document.getElementById('mistakes').innerText = mistakes;
+            updateRankTitle();
+
+            const terminal = document.getElementById('knowledge-terminal');
+            const blocker = document.getElementById('click-blocker');
+            
+            if (mistakes >= MAX_MISTAKES) {
+                terminal.style.color = "var(--danger-color)";
+                terminal.innerHTML = `> ERROR: Mismatch detected. System Failure.`;
+                setTimeout(() => {
+                    showGameOver();
+                }, 1000);
+                return; 
+            }
+
+            terminal.style.color = "var(--danger-color)";
+            terminal.innerHTML = `<div>> ERROR: Mismatch detected. Patient safety compromised.</div><div class="blink">[TAP ANYWHERE TO RESET CARDS]</div>`;
+            terminal.classList.add('clickable-terminal', 'error-state');
+            blocker.classList.remove('hidden'); 
+
+            blocker.onclick = () => {
+                blocker.onclick = null;
+                blocker.classList.add('hidden');
+                terminal.classList.remove('clickable-terminal', 'error-state');
+                
+                firstCard.classList.remove('flipped');
+                secondCard.classList.remove('flipped');
+                
+                terminal.style.color = "var(--primary-color)";
+                terminal.innerHTML = `> Resuming sequence...`;
+                resetBoard();
+            };
+        }
+
+        function resetBoard() {
+            [firstCard, secondCard] = [null, null];
+            lockBoard = false;
+        }
+
+        function showGameOver() {
+            const rank = document.getElementById('rank-title').innerText;
+            const msg = `CLINICAL FAILURE.<br>Maximum errors reached. You just failed your clinical rotation.<br><br>Final Score: ${score}<br>Rank Achieved: ${rank}`;
+            showOverlay("GAME OVER", msg, false);
+        }
+
+        function showOverlay(title, message, isWin) {
+            document.getElementById('overlay-title').innerText = title;
+            document.getElementById('overlay-title').style.color = isWin ? "var(--primary-color)" : "var(--danger-color)";
+            document.getElementById('overlay-message').innerHTML = message;
+            
+            document.getElementById('overlay').classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>
