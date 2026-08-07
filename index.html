@@ -137,14 +137,16 @@
         #reveal-btn {
             width: 100%; 
             margin: 0;
-            padding: 8px; 
-            font-size: clamp(0.8rem, 2vh, 1rem); 
+            padding: 12px; 
+            font-size: clamp(0.9rem, 2vh, 1.1rem); 
             background-color: #002233; 
             color: var(--primary-color); 
             border: 2px dashed var(--primary-color); 
+            box-sizing: border-box; /* Ensures padding doesn't cause overflow */
             box-shadow: none;
             text-transform: uppercase;
             flex-shrink: 0;
+            cursor: pointer;
         }
 
         #reveal-btn:hover:not(:disabled) {
@@ -294,7 +296,7 @@
 
         .mini-btn-group button {
             margin: 0;
-            padding: 8px 15px;
+            padding: 8px 12px;
             font-size: 1em;
             width: auto;
         }
